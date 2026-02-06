@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from './lib/supabase';
+import { supabase, isSupabaseConfigured } from './lib/supabase';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 // --- Types Definitions ---
@@ -204,6 +204,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
+      // Fallback to mock login if Supabase not configured
+      if (!isSupabaseConfigured) {
+        console.warn('Supabase not configured, using mock authentication');
+        const mockUser: User = {
+          id: 'mock-' + Math.random().toString(36).substr(2, 9),
+          name: email.split('@')[0],
+          email,
+          title: 'Researcher',
+          institution: 'Research Institute'
+        };
+        setUser(mockUser);
+        localStorage.setItem('ae_mock_user', JSON.stringify(mockUser));
+        setIsLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -225,6 +241,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const signup = async (email: string, password: string, fullName: string, field?: string) => {
     setIsLoading(true);
     try {
+      // Fallback to mock signup if Supabase not configured
+      if (!isSupabaseConfigured) {
+        console.warn('Supabase not configured, using mock authentication');
+        const mockUser: User = {
+          id: 'mock-' + Math.random().toString(36).substr(2, 9),
+          name: fullName,
+          email,
+          title: 'Researcher',
+          institution: field || 'Research Institute'
+        };
+        setUser(mockUser);
+        localStorage.setItem('ae_mock_user', JSON.stringify(mockUser));
+        setIsLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -252,10 +284,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const logout = async () => {
     try {
-      await supabase.auth.signOut();
+      if (isSupabaseConfigured) {
+        await supabase.auth.signOut();
+      }
       setUser(null);
       setProjects([]);
       setActiveProjectId(null);
+      localStorage.removeItem('ae_mock_user');
+      localStorage.removeItem('ae_projects');
     } catch (error) {
       console.error('Logout error:', error);
       throw error;
