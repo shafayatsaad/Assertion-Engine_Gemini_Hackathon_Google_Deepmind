@@ -112,114 +112,161 @@ export const Hero: React.FC<HeroProps> = ({ onStart }) => {
           </motion.div>
         </motion.div>
 
-        {/* Right Column: HUD / Scanner Visual */}
+        {/* Right Column: Quantum Core Visualization */}
         <motion.div 
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="relative flex justify-center w-full perspective-[2000px] mt-8 lg:mt-0"
+          transition={{ duration: 1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+          className="relative flex justify-center w-full mt-12 lg:mt-0 perspective-[1000px]"
         >
-            {/* Main Card Container with 3D effect */}
-           <div className="relative w-full max-w-sm md:max-w-md aspect-square bg-slate-900/50 rounded-[2.5rem] border border-white/10 overflow-hidden shadow-[0_20px_80px_-20px_rgba(0,0,0,0.5)] backdrop-blur-xl group hover:border-emerald-500/20 hover:shadow-[0_20px_80px_-20px_rgba(16,185,129,0.2)] transition-all duration-500">
-                
-                {/* Internal Grid/Tech Background */}
-                <div className="absolute inset-0 bg-grid opacity-20 pointer-events-none" />
+          <div className="relative w-full max-w-[320px] md:max-w-[400px] aspect-square flex items-center justify-center">
+            
+            {/* Ambient Aurora Background */}
+            <div className="absolute inset-0 -z-10">
+              <motion.div 
+                animate={{ 
+                  scale: [1, 1.2, 1],
+                  opacity: [0.3, 0.5, 0.3], 
+                  rotate: [0, 90, 0]
+                }}
+                transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-0 bg-gradient-to-tr from-emerald-500/20 via-cyan-500/20 to-violet-500/20 blur-[60px] rounded-full mix-blend-screen"
+              />
+            </div>
+
+            {/* Main Glass Vessel */}
+            <motion.div 
+              className="relative w-full h-full rounded-full border border-white/10 bg-slate-900/10 backdrop-blur-[2px] flex items-center justify-center overflow-visible"
+              style={{ boxShadow: "0 0 100px -30px rgba(16, 185, 129, 0.2)" }}
+            >
+              
+              {/* Orbital Ring 1 - Outer */}
+              <motion.div 
+                animate={{ rotate: 360 }}
+                transition={{ duration: 45, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-4 rounded-full border border-dashed border-emerald-500/20" 
+              />
+              
+              {/* Orbital Ring 2 - Middle with Ticks */}
+              <motion.div 
+                animate={{ rotate: -360 }}
+                transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-16 rounded-full border border-white/5"
+              >
+                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1 h-3 bg-emerald-400/50 rounded-full blur-[1px]" />
+                 <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-3 bg-cyan-400/50 rounded-full blur-[1px]" />
+                 <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-1 bg-white/20 rounded-full" />
+                 <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-1 bg-white/20 rounded-full" />
+              </motion.div>
+
+              {/* Orbital Ring 3 - Inner Fast */}
+              <motion.div 
+                animate={{ rotate: 360, scale: [1, 1.05, 1] }}
+                transition={{ 
+                  rotate: { duration: 20, repeat: Infinity, ease: "linear" },
+                  scale: { duration: 4, repeat: Infinity, ease: "easeInOut" }
+                }}
+                className="absolute inset-28 rounded-full border-2 border-transparent border-t-cyan-400/40 border-r-emerald-400/40"
+              />
+
+              {/* The Core */}
+              <div className="relative w-32 h-32 md:w-40 md:h-40">
                 <motion.div 
                   animate={{ 
-                    background: [
-                      "radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.1) 0%, transparent 70%)",
-                      "radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.15) 0%, transparent 70%)",
-                      "radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.1) 0%, transparent 70%)"
-                    ]
+                    scale: [1, 0.95, 1],
                   }}
                   transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                  className="absolute inset-0"
-                />
-                
-                {/* Central Scanner Core */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="relative w-64 h-64 scale-[0.8] md:scale-100">
-                        <motion.div 
-                          animate={{ scale: [1, 1.05, 1] }}
-                          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                          className="absolute inset-0 border border-emerald-500/20 rounded-full"
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                             <motion.div 
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
-                                className="w-56 h-56 rounded-full border border-dashed border-white/15"
-                            />
-                             <motion.div 
-                                animate={{ rotate: -360 }}
-                                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                                className="absolute w-44 h-44 rounded-full border-2 border-white/20 border-t-emerald-400/60"
-                            />
-                            <motion.div 
-                              animate={{ 
-                                scale: [1, 1.2, 1],
-                                opacity: [0.25, 0.35, 0.25]
-                              }}
-                              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                              className="absolute w-28 h-28 bg-emerald-500/25 rounded-full blur-2xl"
-                            />
-                            <div className="absolute w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl mix-blend-screen" />
-                            <motion.div 
-                              initial={{ opacity: 0, scale: 0.8 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              transition={{ duration: 0.8, delay: 0.5 }}
-                              className="relative z-10 text-center"
-                            >
-                                <div className="text-4xl font-bold text-white tracking-tighter">98<span className="text-lg text-emerald-400">%</span></div>
-                                <div className="text-[10px] font-mono text-slate-400 uppercase tracking-widest mt-1">Confidence</div>
-                            </motion.div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Bottom Status Panel */}
-                <div className="absolute bottom-6 left-6 right-6 md:bottom-8 md:left-8 md:right-8">
-                    <div className="bg-slate-950/90 border border-white/10 rounded-2xl p-5 backdrop-blur-md shadow-xl">
-                        <div className="flex justify-between items-center mb-4">
-                            <div className="flex items-center gap-2.5">
-                                <span className="relative flex h-2.5 w-2.5">
-                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                                </span>
-                                <span className="text-xs font-semibold text-slate-200">Analysis Active</span>
-                            </div>
-                            <span className="text-xs font-mono text-slate-400">00:12:42</span>
-                        </div>
-                        {/* Progress Bar */}
-                        <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                            <motion.div 
-                                initial={{ width: "0%" }}
-                                animate={{ width: "87%" }}
-                                transition={{ duration: 2, ease: "easeOut" }}
-                                className="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Floating Elements */}
-                <motion.div 
-                    animate={{ y: [0, -10, 0] }}
-                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute top-8 right-8 md:top-12 md:right-12"
+                  className="absolute inset-0 rounded-full bg-slate-950 flex items-center justify-center border border-white/10 shadow-2xl overflow-hidden"
                 >
-                    <div className="glass-card p-3 rounded-xl flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400">
-                            <Check className="w-4 h-4" />
-                        </div>
-                        <div>
-                            <div className="text-xs font-bold text-white">Verified</div>
-                            <div className="text-[10px] text-slate-400">Logic consistent</div>
-                        </div>
-                    </div>
+                  {/* Core Gradient */}
+                  <motion.div 
+                    animate={{ rotate: [0, 360] }}
+                    transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                    className="absolute inset-[-50%] bg-[conic-gradient(from_0deg,transparent_0deg,rgba(16,185,129,0.3)_180deg,transparent_360deg)] opacity-50"
+                  />
+                  
+                  {/* Center Text */}
+                  <div className="relative z-10 text-center">
+                    <motion.div 
+                      key="percent"
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-emerald-200"
+                    >
+                      98<span className="text-lg text-emerald-400/80">%</span>
+                    </motion.div>
+                    <div className="text-[10px] uppercase tracking-[0.2em] text-emerald-500/70 font-medium mt-1">Match</div>
+                  </div>
                 </motion.div>
+              </div>
 
-           </div>
+            </motion.div>
+
+            {/* Floating Metric - Top Right */}
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0, y: [0, -10, 0] }}
+              transition={{ 
+                opacity: { delay: 0.5 },
+                y: { duration: 5, repeat: Infinity, ease: "easeInOut" }
+              }}
+              className="absolute -top-6 -right-4 md:right-0 glass-card px-5 py-3 rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur-md shadow-lg"
+            >
+              <div className="flex flex-col">
+                <span className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Processing</span>
+                <span className="text-lg font-semibold text-white font-mono">1.2ms</span>
+              </div>
+            </motion.div>
+
+             {/* Floating Metric - Bottom Left */}
+             <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0, y: [0, 10, 0] }}
+              transition={{ 
+                opacity: { delay: 0.7 },
+                y: { duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }
+              }}
+              className="absolute -bottom-2 -left-4 md:left-0 glass-card px-5 py-3 rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur-md shadow-lg"
+            >
+               <div className="flex items-center gap-3">
+                  <div className="flex h-3 w-3 relative">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-semibold text-white">Active</span>
+                    <span className="text-[10px] text-emerald-400/80">System Online</span>
+                  </div>
+               </div>
+            </motion.div>
+
+             {/* Decorative Particle Cloud */}
+            <div className="absolute inset-0 pointer-events-none">
+                {[...Array(6)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    className="absolute w-1 h-1 bg-white/40 rounded-full"
+                    style={{
+                      top: '50%',
+                      left: '50%',
+                    }}
+                    animate={{
+                      x: [0, Math.cos(i * 60) * 140],
+                      y: [0, Math.sin(i * 60) * 140],
+                      opacity: [0, 1, 0],
+                      scale: [0, 1.5, 0]
+                    }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      delay: i * 0.4,
+                      ease: "easeOut"
+                    }}
+                  />
+                ))}
+            </div>
+
+          </div>
         </motion.div>
       </div>
     </section>
