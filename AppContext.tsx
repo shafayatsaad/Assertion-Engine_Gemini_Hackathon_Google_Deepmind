@@ -105,6 +105,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // --- Helper: Fetch User Profile ---
   const fetchUserProfile = async (userId: string) => {
+    console.log('👤 Fetching profile for user:', userId);
     try {
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -112,15 +113,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         .eq('id', userId)
         .single();
       
+      console.log('📊 Profile query result:', { hasProfile: !!profile, hasError: !!error, errorCode: error?.code });
+      
       if (error) {
         // If profile doesn't exist, create it
         if (error.code === 'PGRST116') {
-          console.log('Profile not found, creating new profile...');
+          console.log('⚠️ Profile not found, creating new profile...');
           
           // Get user email from auth
           const { data: { user } } = await supabase.auth.getUser();
           
           if (user) {
+            console.log('📝 Creating profile for:', user.email);
             const { data: newProfile, error: insertError } = await supabase
               .from('profiles')
               .insert({
@@ -133,17 +137,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               .single();
             
             if (insertError) {
-              console.error('Error creating profile:', insertError);
+              console.error('❌ Error creating profile:', insertError);
               // Continue anyway with basic user data
               setUser({
                 id: userId,
                 name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
                 email: user.email || '',
               });
+              console.log('✅ Using fallback user data');
               return;
             }
             
             if (newProfile) {
+              console.log('✅ Profile created successfully');
               setUser({
                 id: newProfile.id,
                 name: newProfile.full_name || '',
@@ -162,6 +168,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       
       if (profile) {
+        console.log('✅ Profile found:', profile.email);
         setUser({
           id: profile.id,
           name: profile.full_name || '',
@@ -172,16 +179,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         });
         
         // Load user's projects
+        console.log('📁 Loading projects...');
         await loadProjects(userId);
+        console.log('✅ Projects loaded');
       }
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error('❌ Error fetching profile:', error);
       // Don't throw - allow login to succeed even if profile fetch fails
     }
   };
 
   // --- Helper: Load Projects ---
   const loadProjects = async (userId: string) => {
+    console.log('📁 Loading projects for user:', userId);
     try {
       const { data, error } = await supabase
         .from('projects')
@@ -189,7 +199,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error loading projects:', error);
+        throw error;
+      }
+      
+      console.log('📊 Projects data:', { count: data?.length || 0 });
       
       // Transform Supabase data to app format
       const transformedProjects: Project[] = (data || []).map(p => ({
@@ -215,8 +230,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }));
       
       setProjects(transformedProjects);
+      console.log('✅ Projects loaded successfully');
     } catch (error) {
-      console.error('Error loading projects:', error);
+      console.error('❌ Error loading projects:', error);
+      // Don't throw - allow login to succeed even if projects fail to load
+      setProjects([]);
     }
   };
 
@@ -265,6 +283,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // --- Auth Handlers ---
 
   const login = async (email: string, password: string) => {
+    console.log('🔐 Login started for:', email);
     setIsLoading(true);
     try {
       // Fallback to mock login if Supabase not configured
@@ -280,15 +299,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setUser(mockUser);
         localStorage.setItem('ae_mock_user', JSON.stringify(mockUser));
         setIsLoading(false);
+        console.log('✅ Mock login successful');
         return;
       }
 
+      console.log('📡 Attempting Supabase login...');
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
       
+      console.log('📡 Supabase response:', { hasData: !!data, hasError: !!error, userId: data?.user?.id });
+      
       if (error) {
+        console.error('❌ Supabase login error:', error);
         // Provide more helpful error messages
         if (error.message.includes('Invalid login credentials')) {
           throw new Error('Invalid email or password. Please check your credentials and try again.');
@@ -300,13 +324,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       
       if (data.user) {
+        console.log('👤 User authenticated, fetching profile...');
         await fetchUserProfile(data.user.id);
+        console.log('✅ Login complete!');
       }
     } catch (error: any) {
-      console.error('Login error:', error);
+      console.error('❌ Login error:', error);
       throw error;
     } finally {
       setIsLoading(false);
+      console.log('🔐 Login flow finished');
     }
   };
 
