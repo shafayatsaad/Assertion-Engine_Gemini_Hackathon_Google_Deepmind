@@ -97,6 +97,106 @@
       ::-webkit-scrollbar-thumb:hover {
         background: linear-gradient(180deg, #334155, #475569);
       }
+
+      /* Advanced Animation Keyframes */
+      @keyframes gradient-shift {
+        0%, 100% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+      }
+
+      @keyframes shimmer {
+        0% {
+          background-position: -200% center;
+        }
+        100% {
+          background-position: 200% center;
+        }
+      }
+
+      @keyframes glow-pulse {
+        0%, 100% {
+          opacity: 0.5;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.05);
+        }
+      }
+
+      @keyframes float {
+        0%, 100% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-10px);
+        }
+      }
+
+      @keyframes fade-in-up {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Animated Gradient Text */
+      .text-gradient-animated {
+        background: linear-gradient(
+          90deg,
+          #34d399,
+          #22d3ee,
+          #a78bfa,
+          #34d399
+        );
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: gradient-shift 8s ease infinite;
+      }
+
+      /* Shimmer Effect */
+      .shimmer {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .shimmer::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.1),
+          transparent
+        );
+        background-size: 200% 100%;
+        animation: shimmer 3s infinite;
+      }
+
+      /* Respect reduced motion preference */
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
     </style>
   <script type="importmap">
 {
