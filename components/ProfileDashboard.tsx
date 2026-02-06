@@ -48,9 +48,13 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({ onNavigate }
     }
   }, []);
 
-  const handleLogout = () => {
-      logout();
+  const handleLogout = async () => {
+    try {
+      await logout();
       onNavigate('landing');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   const renderContent = () => {
