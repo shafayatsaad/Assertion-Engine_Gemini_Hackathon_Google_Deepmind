@@ -6,7 +6,7 @@ export const Modules: React.FC = () => {
   const modules = [
     {
       title: "Mentor AI",
-      icon: BrainCircuit,
+      icon: Sparkles,
       desc: "Instant feedback from our academic AI core. Scans millions of papers to find contradictions.",
       color: "text-cyan-400",
       gradient: "from-cyan-500/20 to-transparent",
@@ -116,7 +116,7 @@ export const Modules: React.FC = () => {
                   >
                     {/* Animated background glow */}
                     <div className={`absolute inset-0 bg-gradient-to-br ${mod.gradient} opacity-0 group-hover:opacity-30 transition-opacity duration-500 animate-[glow-pulse_2s_ease-in-out_infinite]`} />
-                    <mod.icon className={`w-7 h-7 ${mod.color} relative z-10 group-hover:scale-110 transition-transform duration-300`} />
+                    <mod.icon className={`w-7 h-7 ${mod.color} relative z-10 group-hover:scale-110 transition-transform duration-300 ${mod.title === 'Mentor AI' ? 'animate-pulse' : ''}`} />
                   </motion.div>
                   
                   <motion.h3 
