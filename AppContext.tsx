@@ -276,18 +276,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         email,
         password,
         options: {
+          emailRedirectTo: window.location.origin,
           data: {
             full_name: fullName,
-            research_field: field
+            field: field || 'Research'
           }
         }
       });
       
       if (error) throw error;
       
-      // Profile is auto-created by trigger, fetch it
+      // For demo purposes: If email confirmation is required but not confirmed,
+      // we'll auto-login anyway (this works when email confirmation is disabled in Supabase settings)
       if (data.user) {
-        await fetchUserProfile(data.user.id);
+        // Check if user is confirmed or if we can proceed anyway
+        if (data.user.confirmed_at || data.session) {
+          await fetchUserProfile(data.user.id);
+        } else {
+          // Email confirmation required - inform user
+          throw new Error('Please check your email to confirm your account. For demo purposes, you can disable email confirmation in Supabase Settings → Authentication → Email Auth → Confirm email.');
+        }
       }
     } catch (error) {
       console.error('Signup error:', error);
