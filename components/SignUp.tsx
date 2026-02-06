@@ -9,24 +9,24 @@ interface SignUpProps {
 
 export const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({ name: '', email: '', password: '', field: '' });
-  const { login } = useApp();
+  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+  const [error, setError] = useState('');
+  const { signup } = useApp();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate network request
-    setTimeout(() => {
-      login({
-        name: formData.name,
-        email: formData.email,
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.email}`,
-        title: 'Lead Researcher',
-        institution: 'Independent Labs'
-      });
-      setIsLoading(false);
+    setError('');
+    
+    try {
+      await signup(formData.email, formData.password, formData.name);
       onNavigate('dashboard');
-    }, 2000);
+    } catch (err: any) {
+      console.error('Signup error:', err);
+      setError(err.message || 'Failed to create account. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
