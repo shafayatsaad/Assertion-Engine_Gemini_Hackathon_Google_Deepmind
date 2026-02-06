@@ -274,7 +274,7 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
 
                  <button 
                     onClick={handleCreate}
-                    className="w-full md:w-auto px-8 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg transition-all shadow-[0_0_20px_-5px_rgba(16,185,129,0.4)] flex items-center justify-center gap-2"
+                    className="w-full md:w-auto px-8 py-3 btn-primary rounded-lg flex items-center justify-center gap-2"
                  >
                     <BarChart2 className="w-5 h-5" />
                     Analyze for Dead-Ends
