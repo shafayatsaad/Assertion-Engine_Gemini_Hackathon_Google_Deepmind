@@ -220,7 +220,7 @@ export const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
                         disabled={isLoading}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        className="w-full bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2 mt-6 shadow-[0_0_35px_-5px_rgba(34,211,238,0.5)] hover:shadow-[0_0_45px_-5px_rgba(34,211,238,0.7)] disabled:opacity-70 disabled:cursor-not-allowed"
+                        className="w-full btn-cyan py-4 rounded-xl flex items-center justify-center gap-2 mt-6"
                     >
                         {isLoading ? (
                           <>
