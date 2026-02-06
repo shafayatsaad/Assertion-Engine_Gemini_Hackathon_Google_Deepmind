@@ -25,36 +25,80 @@ interface CTASectionProps {
 const CTASection: React.FC<CTASectionProps> = ({ onStart }) => {
   return (
     <section className="py-40 px-6 relative overflow-hidden">
-      {/* Background Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-emerald-500/[0.12] rounded-full blur-[120px] pointer-events-none" />
+      {/* Animated Background Glow */}
+      <motion.div 
+        animate={{ 
+          scale: [1, 1.2, 1],
+          opacity: [0.12, 0.18, 0.12]
+        }}
+        transition={{ 
+          duration: 8, 
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-emerald-500/[0.12] rounded-full blur-[120px] pointer-events-none" 
+      />
       
       <div className="max-w-4xl mx-auto relative z-10">
-        <div className="glass-card rounded-[2.5rem] p-16 md:p-24 text-center relative overflow-hidden border border-white/[0.12] shadow-[0_20px_80px_-20px_rgba(0,0,0,0.3)] hover:border-white/20 transition-all duration-500">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false }}
+          transition={{ duration: 0.8 }}
+          className="glass-card rounded-[2.5rem] p-16 md:p-24 text-center relative overflow-hidden border border-white/[0.12] shadow-[0_20px_80px_-20px_rgba(0,0,0,0.3)] hover:border-white/20 transition-all duration-500"
+        >
           
           <div className="absolute inset-0 bg-grid opacity-20 pointer-events-none" />
           
           <div className="relative z-10 flex flex-col items-center">
-            <h2 className="text-5xl md:text-6xl font-bold text-white mb-8 tracking-tight">
-              Ready to secure your <br/>
-              <span className="text-emerald-400">academic legacy?</span>
-            </h2>
-            <p className="text-lg text-slate-400 mb-12 max-w-xl font-light leading-relaxed">
-              Join elite research institutions using Assertion Engine to validate, secure, and accelerate their discovery pipelines.
-            </p>
-            
-            <button 
-              onClick={onStart}
-              className="bg-emerald-500 text-slate-950 px-12 py-6 rounded-full font-bold text-lg transition-all hover:scale-105 hover:shadow-[0_0_50px_-5px_rgba(16,185,129,0.6)] flex items-center gap-3 group"
+            <motion.h2 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              className="text-5xl md:text-6xl font-bold mb-8 tracking-tight"
             >
-              Get Started Now
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </button>
+              <span className="text-white">Ready to secure your </span><br/>
+              <span className="text-gradient-animated shimmer inline-block">academic legacy?</span>
+            </motion.h2>
+            <motion.p 
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="text-lg text-slate-400 mb-12 max-w-xl font-light leading-relaxed"
+            >
+              Join elite research institutions using Assertion Engine to validate, secure, and accelerate their discovery pipelines.
+            </motion.p>
             
-            <p className="text-xs text-slate-500 mt-10 font-mono tracking-wide">
+            <motion.button 
+              onClick={onStart}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              animate={{ 
+                boxShadow: [
+                  "0 0 20px rgba(16,185,129,0.3)",
+                  "0 0 40px rgba(16,185,129,0.5)",
+                  "0 0 20px rgba(16,185,129,0.3)"
+                ]
+              }}
+              transition={{ 
+                boxShadow: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+              }}
+              className="bg-emerald-500 text-slate-950 px-12 py-6 rounded-full font-bold text-lg transition-all flex items-center gap-3 group relative overflow-hidden"
+            >
+              <span className="relative z-10">Get Started Now</span>
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform relative z-10" />
+            </motion.button>
+            
+            <motion.p 
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="text-xs text-slate-500 mt-10 font-mono tracking-wide"
+            >
               Institutional Access Available • SOC2 Compliant • Encrypted
-            </p>
+            </motion.p>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );
