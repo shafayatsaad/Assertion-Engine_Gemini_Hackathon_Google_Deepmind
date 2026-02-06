@@ -126,6 +126,8 @@ export const SignIn: React.FC<SignInProps> = ({ onNavigate }) => {
               <input 
                 type={showPassword ? "text" : "password"}
                 required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
                 className="glass-input w-full rounded-xl pl-10 pr-10 py-3.5 text-sm text-white placeholder-slate-500"
               />
@@ -137,6 +139,15 @@ export const SignIn: React.FC<SignInProps> = ({ onNavigate }) => {
                 <Eye className="w-4 h-4" />
               </button>
             </div>
+            {error && (
+              <motion.p 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-sm text-rose-400 mt-2"
+              >
+                {error}
+              </motion.p>
+            )}
             <div className="flex justify-end">
                <a href="#" className="text-xs text-emerald-400 hover:text-emerald-300 font-medium transition-colors">Forgot password?</a>
             </div>
