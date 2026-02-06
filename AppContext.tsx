@@ -1,6 +1,6 @@
+/// <reference types="vite/client" />
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
-import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 // --- Types Definitions ---
 
@@ -104,88 +104,131 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isLoading, setIsLoading] = useState(true);
 
   // --- Helper: Fetch User Profile ---
-  const fetchUserProfile = async (userId: string) => {
+  const fetchUserProfile = async (userId: string, fallbackUser?: any) => {
     console.log('👤 Fetching profile for user:', userId);
+    
     try {
-      const { data: profile, error } = await supabase
+      console.log('📡 Attempting to fetch profile from Supabase...');
+      
+      // Create a promise that rejects after 5 seconds
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timed out')), 5000);
+      });
+
+      // Race the Supabase query against the timeout
+      const profilePromise = supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
+
+      const result: any = await Promise.race([profilePromise, timeoutPromise]);
+      const { data: profile, error } = result;
       
-      console.log('📊 Profile query result:', { hasProfile: !!profile, hasError: !!error, errorCode: error?.code });
+      console.log('📊 Profile query result:', { 
+        hasProfile: !!profile, 
+        hasError: !!error, 
+        errorCode: error?.code,
+        errorMessage: error?.message,
+        errorDetails: error?.details,
+        errorHint: error?.hint
+      });
       
       if (error) {
-        // If profile doesn't exist, create it
+        console.error('❌ Supabase error details:', error);
+        
+        // If error is PGRST116 (not found), that's expected for new users
         if (error.code === 'PGRST116') {
-          console.log('⚠️ Profile not found, creating new profile...');
-          
-          // Get user email from auth
-          const { data: { user } } = await supabase.auth.getUser();
-          
-          if (user) {
-            console.log('📝 Creating profile for:', user.email);
-            const { data: newProfile, error: insertError } = await supabase
-              .from('profiles')
-              .insert({
-                id: userId,
-                email: user.email,
-                full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
-                updated_at: new Date().toISOString()
-              })
-              .select()
-              .single();
-            
-            if (insertError) {
-              console.error('❌ Error creating profile:', insertError);
-              // Continue anyway with basic user data
-              setUser({
-                id: userId,
-                name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
-                email: user.email || '',
-              });
-              console.log('✅ Using fallback user data');
-              return;
-            }
-            
-            if (newProfile) {
-              console.log('✅ Profile created successfully');
-              setUser({
-                id: newProfile.id,
-                name: newProfile.full_name || '',
-                email: newProfile.email,
-                avatar: newProfile.avatar_url || undefined,
-                title: newProfile.title || undefined,
-                institution: newProfile.institution || undefined
-              });
-              await loadProjects(userId);
-            }
-          }
-          return;
+          console.log('⚠️ Profile not found (expected for new user), creating new profile...');
+        } else {
+          console.error('❌ Unexpected database error:', error);
+          throw new Error(`Database error: ${error.message}`);
+        }
+      }
+      
+      if (!profile) {
+        console.log('⚠️ No profile found, creating new profile...');
+        
+        // Use fallback user if provided, otherwise try to get from session (local)
+        let currentUser = fallbackUser;
+        if (!currentUser) {
+            const { data: { session } } = await supabase.auth.getSession();
+            currentUser = session?.user;
         }
         
-        throw error;
+        if (currentUser) {
+          console.log('📝 Creating profile for:', currentUser.email);
+          
+          // Try to create profile
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              id: userId,
+              email: currentUser.email,
+              full_name: currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'User',
+              updated_at: new Date().toISOString()
+            });
+          
+          if (insertError && insertError.code !== '23505') { // Ignore duplicate key error
+            console.warn('⚠️ Profile creation failed:', insertError);
+          } else {
+            console.log('✅ Profile created successfully');
+          }
+          
+          // Set user state regardless of insert success
+          setUser({
+            id: userId,
+            name: currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'User',
+            email: currentUser.email || '',
+          });
+          
+          console.log('✅ User state set');
+          await loadProjects(userId);
+          return;
+        }
       }
       
       if (profile) {
-        console.log('✅ Profile found:', profile.email);
+        console.log('✅ Profile found, setting user state');
         setUser({
           id: profile.id,
           name: profile.full_name || '',
-          email: profile.email,
-          avatar: profile.avatar_url || undefined,
-          title: profile.title || undefined,
-          institution: profile.institution || undefined
+          email: profile.email || '',
+          avatar: profile.avatar_url,
+          title: profile.title,
+          institution: profile.institution,
+          bio: profile.bio
         });
-        
-        // Load user's projects
-        console.log('📁 Loading projects...');
         await loadProjects(userId);
-        console.log('✅ Projects loaded');
       }
     } catch (error) {
       console.error('❌ Error fetching profile:', error);
-      // Don't throw - allow login to succeed even if profile fetch fails
+      
+      // Fallback: Always try to set user state from auth data if profile fetch fails
+      try {
+        let authUser = fallbackUser;
+        if (!authUser) {
+           // use getSession instead of getUser to avoid network call
+           const { data: { session } } = await supabase.auth.getSession();
+           authUser = session?.user;
+        }
+
+        if (authUser) {
+          setUser({
+            id: userId,
+            name: authUser.email?.split('@')[0] || 'User',
+            email: authUser.email || '',
+          });
+          console.log('✅ Using fallback user data after error');
+          
+          // We also try to load projects, but expect it might fail too if network is down
+          loadProjects(userId).catch(e => console.warn('Projects load skipped due to error'));
+        } else {
+            console.warn('⚠️ Could not find auth user for fallback');
+        }
+      } catch (innerError) {
+         console.error('❌ Fallback auth check failed:', innerError);
+      }
     }
   };
 
@@ -193,11 +236,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const loadProjects = async (userId: string) => {
     console.log('📁 Loading projects for user:', userId);
     try {
-      const { data, error } = await supabase
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Projects load timed out')), 5000);
+      });
+
+      const projectsPromise = supabase
         .from('projects')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
+
+      const result: any = await Promise.race([projectsPromise, timeoutPromise]);
+      const { data, error } = result;
+
       
       if (error) {
         console.error('❌ Error loading projects:', error);
@@ -207,7 +258,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.log('📊 Projects data:', { count: data?.length || 0 });
       
       // Transform Supabase data to app format
-      const transformedProjects: Project[] = (data || []).map(p => ({
+      const transformedProjects: Project[] = (data || []).map((p: any) => ({
         id: p.id,
         title: p.title,
         hypothesis: p.hypothesis,
@@ -238,6 +289,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  // --- Helper: Check Environment ---
+  const checkEnv = () => {
+    const url = import.meta.env.VITE_SUPABASE_URL;
+    const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    console.log('🌍 Environment Check:', { 
+      hasUrl: !!url, 
+      urlPrefix: url ? url.substring(0, 8) + '...' : 'MISSING',
+      hasKey: !!key,
+      keyPrefix: key ? key.substring(0, 5) + '...' : 'MISSING',
+      isConfigured: isSupabaseConfigured
+    });
+  };
+
+  useEffect(() => {
+    checkEnv();
+  }, []);
+
   // --- Auth State Listener ---
   useEffect(() => {
     // If Supabase not configured, load from localStorage
@@ -256,9 +324,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     // Check active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        fetchUserProfile(session.user.id);
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('❌ Error getting session:', error);
+      } else if (session?.user) {
+        console.log('✅ Found existing session for:', session.user.email);
+        fetchUserProfile(session.user.id, session.user);
+      } else {
+        console.log('ℹ️ No active session found');
       }
       setIsLoading(false);
     });
@@ -266,12 +339,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (session?.user) {
-          await fetchUserProfile(session.user.id);
-        } else {
+        console.log('🔐 Auth State Change:', event, session?.user?.email);
+        
+        if (event === 'SIGNED_IN' && session?.user) {
+          await fetchUserProfile(session.user.id, session.user);
+        } else if (event === 'SIGNED_OUT') {
           setUser(null);
           setProjects([]);
           setActiveProjectId(null);
+        } else if (event === 'USER_UPDATED' && session?.user) {
+           await fetchUserProfile(session.user.id, session.user);
         }
         setIsLoading(false);
       }
@@ -303,33 +380,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return;
       }
 
-      console.log('📡 Attempting Supabase login...');
+      console.log('📡 Attempting Supabase login with:', email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
       
-      console.log('📡 Supabase response:', { hasData: !!data, hasError: !!error, userId: data?.user?.id });
+      console.log('📡 Supabase login response:', { 
+        hasUser: !!data.user, 
+        hasSession: !!data.session, 
+        error: error ? {
+          message: error.message,
+          status: error.status,
+          name: error.name
+        } : null
+      });
       
       if (error) {
         console.error('❌ Supabase login error:', error);
         // Provide more helpful error messages
         if (error.message.includes('Invalid login credentials')) {
           throw new Error('Invalid email or password. Please check your credentials and try again.');
-        } else if (error.message.includes('Email not confirmed')) {
-          throw new Error('Please confirm your email address. Check your inbox for a confirmation link.');
+        } else if (error.message.toLowerCase().includes('email not confirmed')) {
+          throw new Error('Please confirm your email address. Check your inbox (and spam folder) for a confirmation link from Supabase.');
         } else {
           throw new Error(error.message);
         }
       }
       
       if (data.user) {
-        console.log('👤 User authenticated, fetching profile...');
-        await fetchUserProfile(data.user.id);
+        console.log('👤 User authenticated successfully, fetching profile...');
+        // Pass the user object so we don't need to fetch it again if profile load fails
+        await fetchUserProfile(data.user.id, data.user);
         console.log('✅ Login complete!');
       }
     } catch (error: any) {
-      console.error('❌ Login error:', error);
+      console.error('❌ Login wrapper error:', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -339,6 +425,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const signup = async (email: string, password: string, fullName: string, field?: string) => {
     setIsLoading(true);
+    console.log('📝 Signup started for:', email);
+    
     try {
       // Fallback to mock signup if Supabase not configured
       if (!isSupabaseConfigured) {
@@ -356,11 +444,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return;
       }
 
+      console.log('📡 Sending signup request to Supabase...');
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: window.location.origin,
+          emailRedirectTo: window.location.origin, // Important for redirect back after confirmation
           data: {
             full_name: fullName,
             field: field || 'Research'
@@ -368,21 +457,59 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       });
       
+       console.log('📡 Supabase signup response:', { 
+        hasUser: !!data.user, 
+        hasSession: !!data.session, 
+        isConfirmed: !!data.user?.confirmed_at,
+        identities: data.user?.identities,
+        error: error ? {
+          message: error.message,
+          status: error.status
+        } : null
+      });
+
       if (error) throw error;
       
-      // For demo purposes: If email confirmation is required but not confirmed,
-      // we'll auto-login anyway (this works when email confirmation is disabled in Supabase settings)
-      if (data.user) {
-        // Check if user is confirmed or if we can proceed anyway
-        if (data.user.confirmed_at || data.session) {
-          await fetchUserProfile(data.user.id);
-        } else {
-          // Email confirmation required - inform user
-          throw new Error('Please check your email to confirm your account. For demo purposes, you can disable email confirmation in Supabase Settings → Authentication → Email Auth → Confirm email.');
-        }
+      console.log('✅ User created in auth');
+      
+      // Check if email confirmation is required
+      if (data.user && !data.user.confirmed_at && !data.session) {
+         console.log('⚠️ Email confirmation required');
+         // Use a specific error to signal the UI to show a "Check Email" message
+         // But since we want to create the profile anyway if possible (wait, we can't create profile if RLS blocks unconfirmed users)
+         // Actually, RLS usually allows insert for authenticated users. 
+         // If email not confirmed, user is NOT authenticated yet in some configs, or is authenticated but has no session.
+         // If no session, we can't create profile if RLS requires auth.
+         
+         // Let's throwing a helpful message
+         throw new Error('Account created! Please check your email to confirm your account before logging in.');
       }
-    } catch (error) {
-      console.error('Signup error:', error);
+
+      // If we have a session (email confirmation disabled or auto-confirmed)
+      if (data.user && (data.session || data.user.confirmed_at)) {
+        console.log('👤 Authenticated immediately, creating profile...');
+        
+          // Create profile immediately after signup
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert({
+              id: data.user.id,
+              email: data.user.email,
+              full_name: fullName,
+              updated_at: new Date().toISOString()
+            });
+          
+          if (profileError) {
+            console.warn('⚠️ Profile creation failed (might already exist):', profileError);
+          } else {
+            console.log('✅ Profile created successfully');
+          }
+          
+          // Now fetch the profile (will use the one we just created or existing one)
+          await fetchUserProfile(data.user.id, data.user);
+      }
+    } catch (error: any) {
+      console.error('❌ Signup wrapper error:', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -390,40 +517,64 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const logout = async () => {
+    console.log('🚪 Logout started');
     try {
       if (isSupabaseConfigured) {
-        await supabase.auth.signOut();
+        console.log('📡 Signing out from Supabase...');
+        const { error } = await supabase.auth.signOut();
+        if (error) console.error('Sign out error:', error);
       }
       setUser(null);
       setProjects([]);
       setActiveProjectId(null);
       localStorage.removeItem('ae_mock_user');
       localStorage.removeItem('ae_projects');
+      console.log('✅ Logout complete');
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('❌ Logout wrapper error:', error);
       throw error;
     }
   };
 
   const updateUser = async (data: Partial<User>) => {
-    if (!user) return;
+    console.log('👤 Updating user profile:', data);
+    if (!user) {
+      console.warn('⚠️ No user to update');
+      return;
+    }
     
     try {
+      // Fallback to localStorage if Supabase not configured
+      if (!isSupabaseConfigured) {
+        console.log('💾 Using localStorage fallback for profile update');
+        const updatedUser = { ...user, ...data };
+        setUser(updatedUser);
+        localStorage.setItem('ae_mock_user', JSON.stringify(updatedUser));
+        console.log('✅ Profile updated in localStorage');
+        return;
+      }
+
+      console.log('📡 Updating profile in Supabase...');
       const { error } = await supabase
         .from('profiles')
         .update({
           full_name: data.name,
           avatar_url: data.avatar,
           title: data.title,
-          institution: data.institution
+          institution: data.institution,
+          updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Supabase update error:', error);
+        throw error;
+      }
       
       setUser(prev => prev ? { ...prev, ...data } : null);
+      console.log('✅ Profile updated in Supabase');
     } catch (error) {
-      console.error('Update user error:', error);
+      console.error('❌ Update user error:', error);
       throw error;
     }
   };
