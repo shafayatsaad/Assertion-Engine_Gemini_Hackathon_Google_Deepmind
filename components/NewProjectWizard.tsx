@@ -26,7 +26,35 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
     'Closed System', 'Infinite Compute', 'Static Dataset'
   ]);
   const [hypothesis, setHypothesis] = useState("Developing a sub-linear time complexity algorithm for multi-agent pathfinding in non-Euclidean space using quantum-inspired heuristics.");
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const { createProject } = useApp();
+
+  const handleFileUpload = (file: File) => {
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    // Simulate upload and AI processing
+    const interval = setInterval(() => {
+        setUploadProgress(prev => {
+            if (prev >= 100) {
+                clearInterval(interval);
+                return 100;
+            }
+            return prev + 5;
+        });
+    }, 100);
+
+    setTimeout(() => {
+        clearInterval(interval);
+        setUploadProgress(100);
+        
+        // Mock extracted data based on file name or random
+        setHypothesis(`Extracted from ${file.name}: Novel approach to validated consistency in distributed ledger systems using asynchronous consensus mechanisms.`);
+        setAssumptions(['Asynchronous Network', 'Byzantine Fault Tolerance', 'Scalable Nodes', 'Low Latency']);
+        setIsUploading(false);
+    }, 2500);
+  };
 
   /**
    * Initializes a new research project in the global state.
@@ -96,17 +124,69 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="border border-dashed border-emerald-500/30 bg-emerald-500/[0.02] rounded-3xl h-64 flex flex-col items-center justify-center relative group hover:bg-emerald-500/[0.05] transition-colors cursor-pointer"
+              className={`border border-dashed ${isUploading ? 'border-emerald-500 bg-emerald-500/10' : 'border-emerald-500/30 bg-emerald-500/[0.02]'} rounded-3xl h-64 flex flex-col items-center justify-center relative group hover:bg-emerald-500/[0.05] transition-all cursor-pointer overflow-hidden`}
+              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const files = e.dataTransfer.files;
+                if (files && files.length > 0) handleFileUpload(files[0]);
+              }}
            >
-              <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                 <UploadCloud className="w-8 h-8 text-emerald-400" />
-              </div>
-              <h3 className="text-lg font-medium text-white mb-2">Drop Research Proposal</h3>
-              <p className="text-slate-500 text-sm mb-6">Support for PDF, LaTeX (ZIP), or Markdown.</p>
+              <input 
+                type="file" 
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files.length > 0) {
+                    handleFileUpload(e.target.files[0]);
+                  }
+                }}
+                accept=".pdf,.md,.txt,.tex"
+              />
               
-              <button className="px-6 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg text-sm transition-colors shadow-lg shadow-emerald-500/20">
-                 Browse Files
-              </button>
+              <AnimatePresence mode="wait">
+                {isUploading ? (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="flex flex-col items-center z-10"
+                  >
+                    <div className="relative w-16 h-16 mb-4">
+                      <motion.div 
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                        className="w-full h-full border-4 border-emerald-500/30 border-t-emerald-500 rounded-full"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-[10px] font-mono text-emerald-400">{uploadProgress}%</span>
+                      </div>
+                    </div>
+                    <h3 className="text-lg font-medium text-white mb-1">Analyzing Document Structure...</h3>
+                    <p className="text-emerald-400 text-xs font-mono animate-pulse">Extracting Hypothsis & Assumptions</p>
+                  </motion.div>
+                ) : (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="flex flex-col items-center z-10"
+                  >
+                    <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 border border-emerald-500/20 group-hover:border-emerald-500/50 shadow-[0_0_30px_-10px_rgba(16,185,129,0.3)]">
+                       <UploadCloud className="w-8 h-8 text-emerald-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-white mb-2">Drop Research Proposal</h3>
+                    <p className="text-slate-500 text-sm mb-6 max-w-sm text-center">
+                      Support for PDF, LaTeX (ZIP), or Markdown. <br/>
+                      <span className="text-emerald-500/60 text-xs">AI will auto-extract hypothesis and claims.</span>
+                    </p>
+                    
+                    <button className="px-6 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg text-sm transition-colors shadow-lg shadow-emerald-500/20 pointer-events-none">
+                       Browse Files
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
            </motion.div>
         </div>
 
