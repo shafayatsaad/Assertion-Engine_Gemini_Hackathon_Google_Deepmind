@@ -149,7 +149,7 @@ export const SignIn: React.FC<SignInProps> = ({ onNavigate }) => {
             transition={{ delay: 0.7 }}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2 mt-4 shadow-[0_0_30px_-5px_rgba(16,185,129,0.4)] hover:shadow-[0_0_40px_-5px_rgba(16,185,129,0.6)] disabled:opacity-70 disabled:cursor-not-allowed"
+            className="w-full btn-primary py-4 rounded-xl flex items-center justify-center gap-2 mt-4"
           >
             {isLoading ? (
               <>
