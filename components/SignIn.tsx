@@ -33,107 +33,162 @@ export const SignIn: React.FC<SignInProps> = ({ onNavigate }) => {
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center relative overflow-hidden p-6">
       
-      {/* Background Decor */}
-      <div className="absolute -bottom-32 -right-32 w-full max-w-[600px] h-[600px] bg-emerald-900/20 rounded-full blur-[100px] pointer-events-none" />
+      {/* Animated Background */}
+      <motion.div 
+        animate={{ 
+          scale: [1, 1.2, 1],
+          opacity: [0.15, 0.25, 0.15]
+        }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute -bottom-32 -right-32 w-full max-w-[600px] h-[600px] bg-emerald-500/20 rounded-full blur-[120px] pointer-events-none"
+      />
+      <motion.div 
+        animate={{ 
+          scale: [1, 1.1, 1],
+          opacity: [0.1, 0.2, 0.1]
+        }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+        className="absolute -top-32 -left-32 w-full max-w-[500px] h-[500px] bg-cyan-500/15 rounded-full blur-[120px] pointer-events-none"
+      />
 
       {/* Header Logo */}
       <motion.button 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         onClick={() => onNavigate('landing')}
-        className="flex items-center gap-3 mb-12 hover:opacity-80 transition-opacity"
+        className="flex items-center gap-3 mb-12 hover:opacity-80 transition-opacity group"
       >
-        <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+        <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 group-hover:bg-emerald-500/15 transition-all">
            <Atom className="w-6 h-6 text-emerald-400" />
         </div>
-        <span className="font-semibold text-xl tracking-tight text-white">
+        <span className="font-bold text-xl tracking-tight text-white">
            Assertion Engine
         </span>
       </motion.button>
 
       {/* Login Card */}
       <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.1 }}
-        className="glass-card w-full max-w-md p-8 rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-xl relative z-10"
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ delay: 0.1, duration: 0.6 }}
+        className="glass-card w-full max-w-md p-10 rounded-3xl border border-white/10 relative z-10 shadow-[0_20px_80px_-20px_rgba(0,0,0,0.5)]"
       >
-        <div className="text-center mb-8">
-          <h2 className="text-xl font-medium text-slate-200 tracking-wide uppercase mb-2">Researcher Access</h2>
-          <p className="text-sm text-slate-500">Validate your credentials to enter the hub.</p>
+        <div className="text-center mb-10">
+          <motion.h2 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="text-3xl font-bold text-white mb-3 tracking-tight"
+          >
+            Welcome Back
+          </motion.h2>
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="text-sm text-slate-400 font-light"
+          >
+            Sign in to access your research validation hub
+          </motion.p>
         </div>
 
         <form className="space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-slate-400 ml-1">Academic Email</label>
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="space-y-2"
+          >
+            <label className="text-sm font-medium text-slate-300 ml-1">Email Address</label>
             <div className="relative">
               <input 
                 type="email" 
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="e.g. name@university.edu"
-                className="w-full bg-slate-900/50 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all pl-10"
+                placeholder="name@university.edu"
+                className="glass-input w-full rounded-xl px-4 py-3.5 text-sm text-white placeholder-slate-500 pl-10"
               />
-              <span className="absolute left-4 top-3.5 text-slate-500">@</span>
+              <span className="absolute left-4 top-3.5 text-slate-400">@</span>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-slate-400 ml-1">Security Token</label>
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="space-y-2"
+          >
+            <label className="text-sm font-medium text-slate-300 ml-1">Password</label>
             <div className="relative">
-              <Lock className="absolute left-4 top-3.5 w-4 h-4 text-slate-500" />
+              <Lock className="absolute left-4 top-4 w-4 h-4 text-slate-400" />
               <input 
                 type={showPassword ? "text" : "password"}
                 required
                 placeholder="Enter your password"
-                className="w-full bg-slate-900/50 border border-white/10 rounded-lg pl-10 pr-10 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all"
+                className="glass-input w-full rounded-xl pl-10 pr-10 py-3.5 text-sm text-white placeholder-slate-500"
               />
               <button 
                 type="button"
                 onClick={() => setShowPassword(!showPassword)} 
-                className="absolute right-4 top-3.5 text-slate-500 hover:text-slate-300"
+                className="absolute right-4 top-4 text-slate-400 hover:text-slate-200 transition-colors"
               >
                 <Eye className="w-4 h-4" />
               </button>
             </div>
             <div className="flex justify-end">
-               <a href="#" className="text-[10px] text-emerald-500 hover:text-emerald-400 font-medium tracking-wide">FORGOT PASSWORD?</a>
+               <a href="#" className="text-xs text-emerald-400 hover:text-emerald-300 font-medium transition-colors">Forgot password?</a>
             </div>
-          </div>
+          </motion.div>
 
-          <button 
+          <motion.button 
             type="submit"
             disabled={isLoading}
-            className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3.5 rounded-lg transition-all flex items-center justify-center gap-2 mt-2 shadow-[0_0_20px_-5px_rgba(16,185,129,0.3)] disabled:opacity-70 disabled:cursor-not-allowed"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2 mt-4 shadow-[0_0_30px_-5px_rgba(16,185,129,0.4)] hover:shadow-[0_0_40px_-5px_rgba(16,185,129,0.6)] disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                VERIFYING...
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Verifying...</span>
               </>
             ) : (
               <>
-                SIGN IN <ArrowRight className="w-4 h-4" />
+                <span>Sign In</span>
+                <ArrowRight className="w-5 h-5" />
               </>
             )}
-          </button>
+          </motion.button>
         </form>
 
-        <div className="mt-8 text-center">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8 }}
+          className="mt-8 text-center"
+        >
           <p className="text-sm text-slate-400">
             New to the validation hub?{' '}
-            <button onClick={() => onNavigate('signup')} className="text-white font-medium hover:underline">
+            <button onClick={() => onNavigate('signup')} className="text-emerald-400 font-semibold hover:text-emerald-300 transition-colors">
               Create an Account
             </button>
           </p>
-        </div>
+        </motion.div>
       </motion.div>
 
       {/* Footer Text */}
-      <div className="mt-12 text-[10px] text-slate-600 tracking-widest uppercase font-mono text-center">
-        © 2026 Assertion Engine
-      </div>
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1 }}
+        className="mt-12 text-xs text-slate-600 tracking-wider font-mono text-center"
+      >
+        © 2026 Assertion Engine • AI-Powered Validation
+      </motion.div>
     </div>
   );
 };
