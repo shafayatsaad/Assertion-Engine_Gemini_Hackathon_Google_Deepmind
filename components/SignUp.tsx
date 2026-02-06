@@ -184,26 +184,6 @@ export const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-300">Research Field</label>
-                        <div className="relative">
-                            <select 
-                                value={formData.field}
-                                onChange={(e) => setFormData({...formData, field: e.target.value})}
-                                className="glass-input w-full rounded-xl px-4 py-3.5 text-sm text-slate-300 appearance-none cursor-pointer"
-                            >
-                                <option>Select your specialization</option>
-                                <option>Computer Science</option>
-                                <option>Biotechnology</option>
-                                <option>Quantum Physics</option>
-                                <option>Social Sciences</option>
-                            </select>
-                            <div className="absolute right-4 top-4 pointer-events-none">
-                                <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
                         <label className="text-sm font-medium text-slate-300">Password</label>
                         <input 
                           type="password" 
@@ -211,9 +191,21 @@ export const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
                           value={formData.password}
                           onChange={(e) => setFormData({...formData, password: e.target.value})}
                           placeholder="••••••••"
+                          minLength={6}
                           className="glass-input w-full rounded-xl px-4 py-3.5 text-sm text-white placeholder-slate-500"
                         />
+                        <p className="text-xs text-slate-500 mt-1">Minimum 6 characters</p>
                     </div>
+
+                    {error && (
+                      <motion.p 
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-sm text-rose-400"
+                      >
+                        {error}
+                      </motion.p>
+                    )}
 
                     <motion.button 
                         type="submit"
