@@ -1,8 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from './lib/supabase';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 // --- Types Definitions ---
 
 export interface User {
+  id: string; // Supabase UUID
   name: string;
   email: string;
   avatar?: string;
@@ -44,7 +47,7 @@ export interface Project {
   title: string;
   hypothesis: string;
   assumptions: string[];
-  status: 'ANALYZING' | 'COMPLETED' | 'FAILED' | 'REVIEW';
+  status: 'ANALYZING' | 'COMPLETE' | 'FLAGGED' | 'ARCHIVED';
   progress: number;
   updated: string; // ISO string
   logs: Log[];
@@ -70,14 +73,16 @@ interface AppContextType {
   projects: Project[];
   activeProjectId: string | null;
   logs: Log[];
+  isLoading: boolean;
   // Auth Functions
-  login: (user: User) => void;
-  logout: () => void;
-  updateUser: (data: Partial<User>) => void;
+  login: (email: string, password: string) => Promise<void>;
+  signup: (email: string, password: string, fullName: string, field?: string) => Promise<void>;
+  logout: () => Promise<void>;
+  updateUser: (data: Partial<User>) => Promise<void>;
   // Project Functions
-  createProject: (data: Partial<Project>) => string;
+  createProject: (data: Partial<Project>) => Promise<string>;
   setActiveProject: (id: string) => void;
-  updateProject: (id: string, data: Partial<Project>) => void;
+  updateProject: (id: string, data: Partial<Project>) => Promise<void>;
   getActiveProject: () => Project | undefined;
   // System Functions
   addLog: (log: Omit<Log, 'id' | 'time'>) => void;
@@ -89,102 +94,279 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
  * AppProvider Component
  * 
  * Acts as the central state store for the application.
- * Handles persistence to localStorage to maintain state across reloads.
+ * Now uses Supabase for authentication and data persistence.
  */
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [logs, setLogs] = useState<Log[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // --- Persistence Logic ---
+  // --- Helper: Fetch User Profile ---
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (error) throw error;
+      
+      if (profile) {
+        setUser({
+          id: profile.id,
+          name: profile.full_name || '',
+          email: profile.email,
+          avatar: profile.avatar_url || undefined,
+          title: profile.title || undefined,
+          institution: profile.institution || undefined
+        });
+        
+        // Load user's projects
+        await loadProjects(userId);
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
+
+  // --- Helper: Load Projects ---
+  const loadProjects = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      // Transform Supabase data to app format
+      const transformedProjects: Project[] = (data || []).map(p => ({
+        id: p.id,
+        title: p.title,
+        hypothesis: p.hypothesis,
+        assumptions: p.assumptions || [],
+        status: p.status as 'ANALYZING' | 'COMPLETE' | 'FLAGGED' | 'ARCHIVED',
+        progress: p.progress || 0,
+        updated: p.updated_at,
+        logs: [],
+        analysisChat: [],
+        metrics: {
+          confidence: p.confidence || 0,
+          samples: 0,
+          computeTime: "0h 0m",
+          logicConsistency: p.logic_consistency || 0,
+          dataLineage: p.data_lineage || 0,
+          noveltyIndex: p.novelty_index || 0
+        },
+        specimens: [],
+        noveltyPapers: []
+      }));
+      
+      setProjects(transformedProjects);
+    } catch (error) {
+      console.error('Error loading projects:', error);
+    }
+  };
+
+  // --- Auth State Listener ---
   useEffect(() => {
-    const storedUser = localStorage.getItem('ae_user');
-    const storedProjects = localStorage.getItem('ae_projects');
-    const storedLogs = localStorage.getItem('ae_logs');
-    const storedActiveId = localStorage.getItem('ae_active_project_id');
-    
-    if (storedUser) setUser(JSON.parse(storedUser));
-    if (storedProjects) setProjects(JSON.parse(storedProjects));
-    if (storedLogs) setLogs(JSON.parse(storedLogs));
-    if (storedActiveId) setActiveProjectId(storedActiveId);
+    // Check active session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        fetchUserProfile(session.user.id);
+      }
+      setIsLoading(false);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (session?.user) {
+          await fetchUserProfile(session.user.id);
+        } else {
+          setUser(null);
+          setProjects([]);
+          setActiveProjectId(null);
+        }
+        setIsLoading(false);
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
-
-  useEffect(() => {
-    if (user) localStorage.setItem('ae_user', JSON.stringify(user));
-    else localStorage.removeItem('ae_user');
-  }, [user]);
-
-  useEffect(() => {
-    localStorage.setItem('ae_projects', JSON.stringify(projects));
-  }, [projects]);
-  
-  useEffect(() => {
-    localStorage.setItem('ae_logs', JSON.stringify(logs));
-  }, [logs]);
-
-  useEffect(() => {
-    if (activeProjectId) localStorage.setItem('ae_active_project_id', activeProjectId);
-    else localStorage.removeItem('ae_active_project_id');
-  }, [activeProjectId]);
 
   // --- Auth Handlers ---
 
-  const login = (userData: User) => {
-    setUser(userData);
+  const login = async (email: string, password: string) => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error) throw error;
+      
+      if (data.user) {
+        await fetchUserProfile(data.user.id);
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const logout = () => {
-    setUser(null);
-    setActiveProjectId(null);
-    localStorage.removeItem('ae_user');
-    localStorage.removeItem('ae_active_project_id');
+  const signup = async (email: string, password: string, fullName: string, field?: string) => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+            research_field: field
+          }
+        }
+      });
+      
+      if (error) throw error;
+      
+      // Profile is auto-created by trigger, fetch it
+      if (data.user) {
+        await fetchUserProfile(data.user.id);
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const updateUser = (data: Partial<User>) => {
-    setUser(prev => prev ? { ...prev, ...data } : null);
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setProjects([]);
+      setActiveProjectId(null);
+    } catch (error) {
+      console.error('Logout error:', error);
+      throw error;
+    }
+  };
+
+  const updateUser = async (data: Partial<User>) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: data.name,
+          avatar_url: data.avatar,
+          title: data.title,
+          institution: data.institution
+        })
+        .eq('id', user.id);
+      
+      if (error) throw error;
+      
+      setUser(prev => prev ? { ...prev, ...data } : null);
+    } catch (error) {
+      console.error('Update user error:', error);
+      throw error;
+    }
   };
 
   // --- Project Handlers ---
 
-  /**
-   * Creates a new project with default initialization values.
-   */
-  const createProject = (data: Partial<Project>) => {
-    const newProject: Project = {
-      id: Math.floor(Math.random() * 10000).toString(),
-      title: data.title || 'Untitled Research',
-      hypothesis: data.hypothesis || '',
-      assumptions: data.assumptions || [],
-      status: 'ANALYZING',
-      progress: 0,
-      updated: new Date().toISOString(),
-      logs: [],
-      analysisChat: [],
-      // Initialize with empty/zero values so UI shows "waiting" state
-      metrics: {
-        confidence: 0,
-        samples: 0,
-        computeTime: "0h 0m",
-        logicConsistency: 0,
-        dataLineage: 0,
-        noveltyIndex: 0
-      },
-      specimens: [],
-      noveltyPapers: [],
-      ...data
-    };
-    setProjects(prev => [newProject, ...prev]);
-    setActiveProjectId(newProject.id);
-    addLog({ module: 'System', event: `New Project Created: ${newProject.title}`, status: 'info' });
-    return newProject.id;
+  const createProject = async (data: Partial<Project>): Promise<string> => {
+    if (!user) throw new Error('Not authenticated');
+    
+    try {
+      const { data: newProject, error } = await supabase
+        .from('projects')
+        .insert({
+          user_id: user.id,
+          title: data.title || 'Untitled Research',
+          hypothesis: data.hypothesis || '',
+          assumptions: data.assumptions || [],
+          status: 'ANALYZING',
+          progress: 0
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      // Transform to app format
+      const transformedProject: Project = {
+        id: newProject.id,
+        title: newProject.title,
+        hypothesis: newProject.hypothesis,
+        assumptions: newProject.assumptions || [],
+        status: newProject.status,
+        progress: newProject.progress || 0,
+        updated: newProject.updated_at,
+        logs: [],
+        analysisChat: [],
+        metrics: {
+          confidence: 0,
+          samples: 0,
+          computeTime: "0h 0m",
+          logicConsistency: 0,
+          dataLineage: 0,
+          noveltyIndex: 0
+        },
+        specimens: [],
+        noveltyPapers: []
+      };
+      
+      setProjects(prev => [transformedProject, ...prev]);
+      setActiveProjectId(newProject.id);
+      addLog({ module: 'System', event: `New Project Created: ${newProject.title}`, status: 'info' });
+      
+      return newProject.id;
+    } catch (error) {
+      console.error('Create project error:', error);
+      throw error;
+    }
   };
 
-  /**
-   * Updates a specific project by ID.
-   */
-  const updateProject = (id: string, data: Partial<Project>) => {
-    setProjects(prev => prev.map(p => p.id === id ? { ...p, ...data, updated: new Date().toISOString() } : p));
+  const updateProject = async (id: string, data: Partial<Project>) => {
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({
+          title: data.title,
+          hypothesis: data.hypothesis,
+          assumptions: data.assumptions,
+          status: data.status,
+          progress: data.progress,
+          confidence: data.metrics?.confidence,
+          logic_consistency: data.metrics?.logicConsistency,
+          data_lineage: data.metrics?.dataLineage,
+          novelty_index: data.metrics?.noveltyIndex
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setProjects(prev => prev.map(p => 
+        p.id === id ? { ...p, ...data, updated: new Date().toISOString() } : p
+      ));
+    } catch (error) {
+      console.error('Update project error:', error);
+      throw error;
+    }
   };
 
   const setActiveProject = (id: string) => {
@@ -209,9 +391,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       user, 
       projects, 
       activeProjectId, 
-      logs, 
+      logs,
+      isLoading,
       login, 
       logout, 
+      signup,
       updateUser,
       createProject, 
       setActiveProject, 
