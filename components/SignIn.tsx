@@ -107,7 +107,7 @@ export const SignIn: React.FC<SignInProps> = ({ onNavigate }) => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@university.edu"
+                placeholder="your email"
                 className="glass-input w-full rounded-xl px-4 py-3.5 text-sm text-white placeholder-slate-500 pl-10"
               />
               <span className="absolute left-4 top-3.5 text-slate-400">@</span>
