@@ -29,10 +29,14 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onNavigate, cl
     setIsOpen(false);
   };
 
-  const handleLogout = () => {
-    logout();
-    onNavigate('landing');
-    setIsOpen(false);
+  const handleLogout = async () => {
+    try {
+      await logout();
+      onNavigate('landing');
+      setIsOpen(false);
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   if (!user) return null;
