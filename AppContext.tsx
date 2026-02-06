@@ -112,7 +112,54 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         .eq('id', userId)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        // If profile doesn't exist, create it
+        if (error.code === 'PGRST116') {
+          console.log('Profile not found, creating new profile...');
+          
+          // Get user email from auth
+          const { data: { user } } = await supabase.auth.getUser();
+          
+          if (user) {
+            const { data: newProfile, error: insertError } = await supabase
+              .from('profiles')
+              .insert({
+                id: userId,
+                email: user.email,
+                full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+                updated_at: new Date().toISOString()
+              })
+              .select()
+              .single();
+            
+            if (insertError) {
+              console.error('Error creating profile:', insertError);
+              // Continue anyway with basic user data
+              setUser({
+                id: userId,
+                name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+                email: user.email || '',
+              });
+              return;
+            }
+            
+            if (newProfile) {
+              setUser({
+                id: newProfile.id,
+                name: newProfile.full_name || '',
+                email: newProfile.email,
+                avatar: newProfile.avatar_url || undefined,
+                title: newProfile.title || undefined,
+                institution: newProfile.institution || undefined
+              });
+              await loadProjects(userId);
+            }
+          }
+          return;
+        }
+        
+        throw error;
+      }
       
       if (profile) {
         setUser({
@@ -129,6 +176,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
+      // Don't throw - allow login to succeed even if profile fetch fails
     }
   };
 
@@ -240,12 +288,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         password
       });
       
-      if (error) throw error;
+      if (error) {
+        // Provide more helpful error messages
+        if (error.message.includes('Invalid login credentials')) {
+          throw new Error('Invalid email or password. Please check your credentials and try again.');
+        } else if (error.message.includes('Email not confirmed')) {
+          throw new Error('Please confirm your email address. Check your inbox for a confirmation link.');
+        } else {
+          throw new Error(error.message);
+        }
+      }
       
       if (data.user) {
         await fetchUserProfile(data.user.id);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
       throw error;
     } finally {
