@@ -174,6 +174,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // --- Auth State Listener ---
   useEffect(() => {
+    // If Supabase not configured, load from localStorage
+    if (!isSupabaseConfigured) {
+      const mockUser = localStorage.getItem('ae_mock_user');
+      const storedProjects = localStorage.getItem('ae_projects');
+      
+      if (mockUser) {
+        setUser(JSON.parse(mockUser));
+      }
+      if (storedProjects) {
+        setProjects(JSON.parse(storedProjects));
+      }
+      setIsLoading(false);
+      return;
+    }
+
     // Check active session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
@@ -327,6 +342,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!user) throw new Error('Not authenticated');
     
     try {
+      // Fallback to localStorage if Supabase not configured
+      if (!isSupabaseConfigured) {
+        const newProject: Project = {
+          id: Math.random().toString(36).substr(2, 9),
+          title: data.title || 'Untitled Research',
+          hypothesis: data.hypothesis || '',
+          assumptions: data.assumptions || [],
+          status: 'ANALYZING',
+          progress: 0,
+          updated: new Date().toISOString(),
+          logs: [],
+          analysisChat: [],
+          metrics: {
+            confidence: 0,
+            samples: 0,
+            computeTime: "0h 0m",
+            logicConsistency: 0,
+            dataLineage: 0,
+            noveltyIndex: 0
+          },
+          specimens: [],
+          noveltyPapers: []
+        };
+        
+        setProjects(prev => {
+          const updated = [newProject, ...prev];
+          localStorage.setItem('ae_projects', JSON.stringify(updated));
+          return updated;
+        });
+        setActiveProjectId(newProject.id);
+        addLog({ module: 'System', event: `New Project Created: ${newProject.title}`, status: 'info' });
+        return newProject.id;
+      }
+
       const { data: newProject, error } = await supabase
         .from('projects')
         .insert({
