@@ -172,13 +172,13 @@ export const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-300">Institutional Email</label>
+                        <label className="text-sm font-medium text-slate-300">Email</label>
                         <input 
                           type="email" 
                           required
                           value={formData.email}
                           onChange={(e) => setFormData({...formData, email: e.target.value})}
-                          placeholder="name@university.edu"
+                          placeholder="your.email@example.com"
                           className="glass-input w-full rounded-xl px-4 py-3.5 text-sm text-white placeholder-slate-500"
                         />
                     </div>
