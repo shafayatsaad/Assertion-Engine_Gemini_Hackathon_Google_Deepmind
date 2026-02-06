@@ -43,16 +43,27 @@ export const Modules: React.FC = () => {
             transition={{ duration: 0.8 }}
             className="max-w-2xl"
           >
-            <div className="flex items-center gap-2 text-emerald-400 font-mono text-xs uppercase tracking-widest mb-5">
-               <Sparkles className="w-3.5 h-3.5" />
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+              className="flex items-center gap-2 text-emerald-400 font-mono text-xs uppercase tracking-widest mb-5"
+            >
+               <Sparkles className="w-3.5 h-3.5 animate-pulse" />
                Core Modules
-            </div>
-            <h2 className="text-5xl md:text-6xl font-bold text-white mb-6 tracking-tight">
-               Research <span className="text-slate-500">Pipeline</span>
+            </motion.div>
+            <h2 className="text-5xl md:text-6xl font-bold mb-6 tracking-tight">
+               <span className="text-white">Research </span>
+               <span className="text-gradient-animated shimmer inline-block">Pipeline</span>
             </h2>
-            <p className="text-slate-400 text-lg font-light leading-relaxed">
+            <motion.p 
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="text-slate-400 text-lg font-light leading-relaxed"
+            >
               Choose your validation pathway. Each module is designed to rigorously test a specific aspect of your thesis before peer review.
-            </p>
+            </motion.p>
           </motion.div>
           
           <motion.button 
@@ -68,29 +79,62 @@ export const Modules: React.FC = () => {
           {modules.map((mod, index) => (
             <motion.div 
               key={index} 
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false, margin: "-10%" }}
-              transition={{ duration: 0.8, delay: index * 0.1 }}
+              initial={{ opacity: 0, y: 60, rotateX: -15 }}
+              whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
+              viewport={{ once: false, margin: "-50px" }}
+              transition={{ 
+                duration: 0.8, 
+                delay: index * 0.15,
+                type: "spring",
+                stiffness: 80,
+                damping: 20
+              }}
+              whileHover={{ 
+                y: -12,
+                scale: 1.02,
+                transition: { duration: 0.3, type: "spring", stiffness: 400 }
+              }}
               className={`group relative p-10 rounded-[2rem] bg-slate-900/60 border border-white/[0.08] backdrop-blur-sm transition-all duration-500 hover:bg-slate-900/90 hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] ${mod.border}`}
+              style={{ perspective: "1000px" }}
             >
               {/* Gradient glow effect */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${mod.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-[2rem]`} />
+              <motion.div 
+                initial={{ opacity: 0 }}
+                whileHover={{ opacity: 1 }}
+                transition={{ duration: 0.5 }}
+                className={`absolute inset-0 bg-gradient-to-br ${mod.gradient} rounded-[2rem]`} 
+              />
               
               <div className="relative z-10">
-                  <div className={`w-16 h-16 rounded-2xl bg-slate-950 border border-white/10 flex items-center justify-center mb-10 shadow-xl group-hover:scale-110 group-hover:shadow-2xl transition-transform duration-500`}>
-                    <mod.icon className={`w-7 h-7 ${mod.color}`} />
-                  </div>
+                  <motion.div 
+                    whileHover={{ 
+                      scale: 1.15, 
+                      rotate: [0, -10, 10, -10, 0],
+                      transition: { duration: 0.5 }
+                    }}
+                    className={`w-16 h-16 rounded-2xl bg-slate-950 border border-white/10 flex items-center justify-center mb-10 shadow-xl group-hover:shadow-2xl transition-shadow duration-500 relative overflow-hidden`}
+                  >
+                    {/* Animated background glow */}
+                    <div className={`absolute inset-0 bg-gradient-to-br ${mod.gradient} opacity-0 group-hover:opacity-30 transition-opacity duration-500 animate-[glow-pulse_2s_ease-in-out_infinite]`} />
+                    <mod.icon className={`w-7 h-7 ${mod.color} relative z-10 group-hover:scale-110 transition-transform duration-300`} />
+                  </motion.div>
                   
-                  <h3 className="text-2xl font-bold text-white mb-5">{mod.title}</h3>
-                  <p className="text-slate-400 text-base leading-relaxed mb-10">
+                  <motion.h3 
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    transition={{ delay: index * 0.15 + 0.3 }}
+                    className="text-2xl font-bold text-white mb-5"
+                  >
+                    {mod.title}
+                  </motion.h3>
+                  <motion.p 
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    transition={{ delay: index * 0.15 + 0.4 }}
+                    className="text-slate-400 text-base leading-relaxed"
+                  >
                     {mod.desc}
-                  </p>
-                  
-                  <div className="flex items-center gap-2 text-sm font-semibold text-white opacity-60 group-hover:opacity-100 transition-opacity">
-                    <span>Initialize</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </div>
+                  </motion.p>
               </div>
             </motion.div>
           ))}
