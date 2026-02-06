@@ -95,7 +95,7 @@ const CTASection: React.FC<CTASectionProps> = ({ onStart }) => {
               transition={{ duration: 0.8, delay: 0.4 }}
               className="text-xs text-slate-500 mt-10 font-mono tracking-wide"
             >
-              Institutional Access Available • SOC2 Compliant • Encrypted
+              AI-Powered Validation • Real-Time Analysis • Academic Research
             </motion.p>
           </div>
         </motion.div>
