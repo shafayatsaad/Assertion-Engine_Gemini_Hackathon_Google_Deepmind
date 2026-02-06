@@ -25,10 +25,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate }) => {
     setMobileMenuOpen(false);
   };
 
-  const handleLogout = () => {
-    logout();
-    onNavigate('landing');
-    setMobileMenuOpen(false);
+  const handleLogout = async () => {
+    try {
+      await logout();
+      onNavigate('landing');
+      setMobileMenuOpen(false);
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   return (
