@@ -16,6 +16,7 @@ import { NoveltyPage } from './components/NoveltyPage';
 import { ArrowRight } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AppProvider, useApp } from './AppContext';
+import { SmoothScroll } from './components/SmoothScroll';
 
 // Modern CTA Section
 interface CTASectionProps {
@@ -211,7 +212,9 @@ const MainApp = () => {
 export default function App() {
   return (
     <AppProvider>
-      <MainApp />
+      <SmoothScroll>
+        <MainApp />
+      </SmoothScroll>
     </AppProvider>
   )
 }
