@@ -25,7 +25,7 @@ import { useApp } from '../AppContext';
 import { ProfileDropdown } from './ProfileDropdown';
 
 interface DashboardProps {
-  onNavigate: (page: 'landing' | 'profile' | 'dashboard' | 'new-project' | 'library' | 'analysis') => void;
+  onNavigate: (page: 'landing' | 'profile' | 'settings' | 'dashboard' | 'newproject' | 'library' | 'analysis') => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
@@ -43,7 +43,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       <nav className="border-b border-white/5 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
-            <button onClick={() => onNavigate('landing')} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <button onClick={() => onNavigate('dashboard')} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
                   <Atom className="w-4 h-4 text-emerald-500" />
                </div>
@@ -55,7 +55,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
               <button onClick={() => onNavigate('library')} className="px-4 py-2 text-sm font-medium rounded-lg transition-colors text-slate-400 hover:text-white hover:bg-white/5">
                 Library
               </button>
-              <button onClick={() => onNavigate('profile')} className="px-3 py-2 text-sm font-medium text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-white/5">
+              <button onClick={() => onNavigate('settings')} className="px-3 py-2 text-sm font-medium text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-white/5">
                 Settings
               </button>
             </div>
@@ -63,7 +63,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
           <div className="flex items-center gap-3 md:gap-4">
             <button 
-              onClick={() => onNavigate('new-project')}
+              onClick={() => onNavigate('newproject')}
               className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded-lg text-xs font-semibold transition-all shadow-[0_0_15px_-5px_rgba(16,185,129,0.3)]"
             >
               <Plus className="w-4 h-4" />
@@ -137,7 +137,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                     <div className="rounded-3xl bg-slate-900/50 border border-white/10 min-h-[300px] flex flex-col items-center justify-center p-8 text-center">
                         <h2 className="text-xl font-bold text-white mb-2">No Active Projects</h2>
                         <p className="text-slate-400 mb-6">Start a new validation mission to see analytics.</p>
-                        <button onClick={() => onNavigate('new-project')} className="bg-emerald-500 text-slate-950 px-6 py-3 rounded-lg font-bold hover:bg-emerald-400 transition-colors">Create Project</button>
+                        <button onClick={() => onNavigate('newproject')} className="bg-emerald-500 text-slate-950 px-6 py-3 rounded-lg font-bold hover:bg-emerald-400 transition-colors">Create Project</button>
                     </div>
                 )}
 
