@@ -11,23 +11,24 @@ export const SignIn: React.FC<SignInProps> = ({ onNavigate }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const { login } = useApp();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate network request and login
-    setTimeout(() => {
-      login({
-        name: email.split('@')[0],
-        email: email,
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
-        title: 'Research Fellow',
-        institution: 'Institute of Advanced Cybernetics'
-      });
-      setIsLoading(false);
+    setError('');
+    
+    try {
+      await login(email, password);
       onNavigate('dashboard');
-    }, 1500);
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setError(err.message || 'Failed to sign in. Please check your credentials.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
