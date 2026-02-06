@@ -7,6 +7,7 @@ import { Footer } from './components/Footer';
 import { SignIn } from './components/SignIn';
 import { SignUp } from './components/SignUp';
 import { ProfileDashboard } from './components/ProfileDashboard';
+import { ProfileSettings } from './components/ProfileSettings';
 import { Dashboard } from './components/Dashboard';
 import { NewProjectWizard } from './components/NewProjectWizard';
 import { ResearchLibrary } from './components/ResearchLibrary';
@@ -123,84 +124,94 @@ const PageTransition: React.FC<PageTransitionProps> = ({ children, className = "
 );
 
 const MainApp = () => {
-  const [view, setView] = useState<'landing' | 'signin' | 'signup' | 'profile' | 'dashboard' | 'new-project' | 'library' | 'specimen-lab' | 'analysis' | 'novelty'>('landing');
+  type Page = 'landing' | 'signin' | 'signup' | 'profile' | 'settings' | 'dashboard' | 'newproject' | 'library' | 'specimens' | 'analysis' | 'novelty';
+  const [currentPage, setCurrentPage] = useState<Page>('landing');
   const { user } = useApp();
+
+  const handleNavigate = (page: Page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Redirect to dashboard if logged in and on landing/auth pages
   useEffect(() => {
-    if (user && (view === 'landing' || view === 'signin' || view === 'signup')) {
-      setView('dashboard');
+    if (user && (currentPage === 'landing' || currentPage === 'signin' || currentPage === 'signup')) {
+      handleNavigate('dashboard');
     }
-  }, [user, view]);
+  }, [user, currentPage]);
 
   return (
     <div className="bg-slate-950 text-slate-200 font-sans selection:bg-emerald-500/30 selection:text-emerald-200">
       <AnimatePresence mode="wait">
         
-        {view === 'landing' && (
+        {currentPage === 'landing' && (
           <PageTransition key="landing">
-             <Navbar onNavigate={setView} />
+             <Navbar onNavigate={handleNavigate} />
              <main>
-               <Hero onStart={() => setView('signup')} />
+               <Hero onStart={() => handleNavigate('signup')} />
                <HowItWorks />
                <Modules />
-               <CTASection onStart={() => setView('signup')} />
+               <CTASection onStart={() => handleNavigate('signup')} />
              </main>
-             <Footer onNavigate={setView} />
+             <Footer onNavigate={handleNavigate} />
           </PageTransition>
         )}
 
-        {view === 'signin' && (
+        {currentPage === 'signin' && (
           <PageTransition key="signin">
-            <SignIn onNavigate={setView} />
+            <SignIn onNavigate={handleNavigate} />
           </PageTransition>
         )}
 
-        {view === 'signup' && (
+        {currentPage === 'signup' && (
           <PageTransition key="signup">
-            <SignUp onNavigate={setView} />
+            <SignUp onNavigate={handleNavigate} />
           </PageTransition>
         )}
 
-        {view === 'profile' && (
+        {currentPage === 'profile' && (
           <PageTransition key="profile">
-            <ProfileDashboard onNavigate={setView} />
+            <ProfileDashboard onNavigate={handleNavigate} />
           </PageTransition>
         )}
-
-        {view === 'dashboard' && (
+        {currentPage === 'settings' && (
+          <PageTransition key="settings">
+            <ProfileSettings onNavigate={handleNavigate} />
+          </PageTransition>
+        )}
+        {currentPage === 'dashboard' && (
           <PageTransition key="dashboard">
-            <Dashboard onNavigate={setView} />
+            <Dashboard onNavigate={handleNavigate} />
           </PageTransition>
         )}
 
-        {view === 'new-project' && (
+        {currentPage === 'newproject' && (
           <PageTransition key="new-project">
-            <NewProjectWizard onNavigate={setView} />
+            <NewProjectWizard onNavigate={handleNavigate} />
           </PageTransition>
         )}
 
-        {view === 'library' && (
+        {currentPage === 'library' && (
           <PageTransition key="library">
-            <ResearchLibrary onNavigate={setView} />
+            <ResearchLibrary onNavigate={handleNavigate} />
           </PageTransition>
         )}
 
-        {view === 'specimen-lab' && (
+        {currentPage === 'specimens' && (
           <PageTransition key="specimen-lab">
-            <SpecimenLab onNavigate={setView} />
+            <SpecimenLab onNavigate={handleNavigate} />
           </PageTransition>
         )}
 
-        {view === 'analysis' && (
+        {currentPage === 'analysis' && (
           <PageTransition key="analysis">
-            <AnalysisPage onNavigate={setView} />
+            <AnalysisPage onNavigate={handleNavigate} />
           </PageTransition>
         )}
 
-        {view === 'novelty' && (
+        {currentPage === 'novelty' && (
           <PageTransition key="novelty">
-            <NoveltyPage onNavigate={setView} />
+            <NoveltyPage onNavigate={handleNavigate} />
           </PageTransition>
         )}
 
