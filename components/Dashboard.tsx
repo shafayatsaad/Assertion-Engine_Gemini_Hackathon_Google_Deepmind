@@ -126,7 +126,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                             </button>
                             <button 
                                 onClick={() => { setActiveProject(activeProject.id); onNavigate('analysis'); }}
-                                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-sm font-bold transition-colors shadow-[0_0_15px_-5px_rgba(16,185,129,0.4)]"
+                                className="flex items-center gap-2 px-4 py-2 rounded-lg btn-primary text-sm"
                             >
                                 <Play className="w-4 h-4 fill-current" />
                                 Resume Research
