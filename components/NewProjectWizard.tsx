@@ -1,0 +1,227 @@
+import React, { useState } from 'react';
+import { 
+  Box, 
+  User, 
+  UploadCloud, 
+  X, 
+  Plus, 
+  BarChart2, 
+  CheckCircle2, 
+  Lock, 
+  HelpCircle,
+  FileText,
+  ChevronRight,
+  Database
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useApp } from '../AppContext';
+import { ProfileDropdown } from './ProfileDropdown';
+
+interface NewProjectWizardProps {
+  onNavigate: (page: 'dashboard' | 'library' | 'specimen-lab' | 'analysis' | 'novelty' | 'profile') => void;
+}
+
+export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }) => {
+  const [assumptions, setAssumptions] = useState([
+    'Closed System', 'Infinite Compute', 'Static Dataset'
+  ]);
+  const [hypothesis, setHypothesis] = useState("Developing a sub-linear time complexity algorithm for multi-agent pathfinding in non-Euclidean space using quantum-inspired heuristics.");
+  const { createProject } = useApp();
+
+  /**
+   * Initializes a new research project in the global state.
+   */
+  const handleCreate = () => {
+    createProject({
+      title: "New Research Initiative " + new Date().toLocaleDateString(),
+      hypothesis: hypothesis,
+      assumptions: assumptions,
+      status: "ANALYZING",
+      progress: 0
+    });
+    onNavigate('analysis');
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-emerald-500/30 selection:text-emerald-200 flex flex-col">
+      
+      {/* Wizard Header */}
+      <header className="border-b border-white/5 bg-slate-950/50 backdrop-blur-md sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+               <Box className="w-5 h-5 text-emerald-400" />
+            </div>
+            <span className="font-bold text-white tracking-tight">Project</span>
+          </div>
+
+          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-500">
+            <button onClick={() => onNavigate('dashboard')} className="hover:text-white transition-colors">Dashboard</button>
+            <button onClick={() => onNavigate('analysis')} className="text-white bg-white/5 px-3 py-1 rounded-lg transition-colors">Analysis</button>
+            <button onClick={() => onNavigate('specimen-lab')} className="hover:text-white transition-colors">Dataset</button>
+            <button onClick={() => onNavigate('library')} className="hover:text-white transition-colors">Library</button>
+            <button onClick={() => onNavigate('novelty')} className="hover:text-white transition-colors">Novelty</button>
+          </nav>
+
+          <div className="flex items-center gap-4">
+            <ProfileDropdown onNavigate={onNavigate} />
+          </div>
+        </div>
+      </header>
+
+      <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-12 space-y-8">
+        
+        {/* Breadcrumb */}
+        <nav className="flex items-center text-sm font-medium text-slate-500 mb-6">
+            <button onClick={() => onNavigate('dashboard')} className="hover:text-white transition-colors">Dashboard</button>
+            <ChevronRight className="w-4 h-4 mx-2 text-slate-700" />
+            <span className="text-emerald-400">Project</span>
+        </nav>
+
+        {/* Research Intake Phase */}
+        <div className="space-y-6">
+           <motion.div
+             initial={{ opacity: 0, x: -20 }}
+             animate={{ opacity: 1, x: 0 }}
+             transition={{ duration: 0.5, delay: 0.1 }}
+           >
+              <h2 className="text-2xl font-bold text-white">Research Intake Phase</h2>
+              <p className="text-slate-400 text-sm mt-1">
+                 Upload your proposal and verify the manifest metadata to begin dead-end analysis.
+              </p>
+           </motion.div>
+
+           {/* Drop Zone */}
+           <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="border border-dashed border-emerald-500/30 bg-emerald-500/[0.02] rounded-3xl h-64 flex flex-col items-center justify-center relative group hover:bg-emerald-500/[0.05] transition-colors cursor-pointer"
+           >
+              <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                 <UploadCloud className="w-8 h-8 text-emerald-400" />
+              </div>
+              <h3 className="text-lg font-medium text-white mb-2">Drop Research Proposal</h3>
+              <p className="text-slate-500 text-sm mb-6">Support for PDF, LaTeX (ZIP), or Markdown.</p>
+              
+              <button className="px-6 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg text-sm transition-colors shadow-lg shadow-emerald-500/20">
+                 Browse Files
+              </button>
+           </motion.div>
+        </div>
+
+        {/* Digital Manifest Clipboard */}
+        <motion.div 
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="space-y-4"
+        >
+           <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-white font-medium">
+                 <FileText className="w-4 h-4 text-emerald-500" />
+                 Digital Manifest Clipboard
+              </div>
+           </div>
+
+           <div className="glass-card p-6 md:p-8 rounded-2xl bg-slate-900/50 border border-white/10">
+              <div className="grid md:grid-cols-2 gap-8 mb-8">
+                 {/* Hypothesis */}
+                 <div className="space-y-3">
+                    <label className="text-[10px] font-mono text-emerald-500 uppercase tracking-wider flex items-center gap-2">
+                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                       Hypothesis / Research Question
+                    </label>
+                    <textarea 
+                       className="w-full h-32 bg-slate-950/50 border border-white/10 rounded-lg p-4 text-sm text-slate-300 focus:outline-none focus:border-emerald-500/50 transition-all resize-none leading-relaxed"
+                       value={hypothesis}
+                       onChange={(e) => setHypothesis(e.target.value)}
+                    />
+                 </div>
+
+                 {/* Assumptions */}
+                 <div className="space-y-3">
+                    <label className="text-[10px] font-mono text-emerald-500 uppercase tracking-wider flex items-center gap-2">
+                       <span className="text-emerald-500">=x</span>
+                       Research Assumptions
+                    </label>
+                    <div className="bg-slate-950/50 border border-white/10 rounded-lg p-4 h-32 overflow-y-auto">
+                       <div className="flex flex-wrap gap-2">
+                          <AnimatePresence>
+                            {assumptions.map((tag, i) => (
+                               <motion.span 
+                                 key={tag}
+                                 initial={{ opacity: 0, scale: 0.8 }}
+                                 animate={{ opacity: 1, scale: 1 }}
+                                 exit={{ opacity: 0, scale: 0.8 }}
+                                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono"
+                               >
+                                  {tag}
+                                  <button className="hover:text-white" onClick={() => setAssumptions(assumptions.filter((_, idx) => idx !== i))}>
+                                     <X className="w-3 h-3" />
+                                  </button>
+                               </motion.span>
+                            ))}
+                          </AnimatePresence>
+                          <button 
+                             onClick={() => setAssumptions([...assumptions, 'New Assumption'])}
+                             className="inline-flex items-center gap-1 px-2.5 py-1 rounded border border-dashed border-slate-700 text-slate-500 text-xs font-mono hover:text-white hover:border-slate-500 transition-colors"
+                          >
+                             <Plus className="w-3 h-3" />
+                             Add Assumption
+                          </button>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+
+              {/* Bottom Row */}
+              <div className="flex flex-col md:flex-row items-end gap-6">
+                 <div className="flex-1 w-full space-y-2">
+                    <label className="text-[10px] font-mono text-emerald-500 uppercase tracking-wider flex items-center gap-2">
+                       <Database className="w-3 h-3 text-emerald-500" />
+                       Primary Data Source
+                    </label>
+                    <div className="relative">
+                       <input 
+                          type="text" 
+                          defaultValue="arXiv Open Repository"
+                          className="w-full bg-slate-950/50 border border-white/10 rounded-lg pl-4 pr-10 py-3 text-sm text-slate-300 focus:outline-none focus:border-emerald-500/50 transition-all"
+                       />
+                       <div className="absolute right-3 top-3 text-emerald-500 opacity-50 text-[10px]">▼</div>
+                    </div>
+                 </div>
+
+                 <button 
+                    onClick={handleCreate}
+                    className="w-full md:w-auto px-8 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg transition-all shadow-[0_0_20px_-5px_rgba(16,185,129,0.4)] flex items-center justify-center gap-2"
+                 >
+                    <BarChart2 className="w-5 h-5" />
+                    Analyze for Dead-Ends
+                 </button>
+              </div>
+           </div>
+        </motion.div>
+
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-white/5 py-6 bg-slate-950">
+         <div className="max-w-5xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+            <div className="flex items-center gap-2">
+               <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+               Verified by Emerald AI Engine
+            </div>
+            <div className="flex items-center gap-2">
+               <Lock className="w-3 h-3" />
+               End-to-End Encrypted Intake
+            </div>
+            <div className="flex items-center gap-2 hover:text-white cursor-pointer transition-colors">
+               <HelpCircle className="w-3 h-3" />
+               Support Available
+            </div>
+         </div>
+      </footer>
+    </div>
+  );
+};
