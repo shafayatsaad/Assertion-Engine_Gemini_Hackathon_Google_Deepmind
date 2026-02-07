@@ -189,12 +189,15 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
     if (!activeProject || isScanning) return;
 
     // Context Awareness Check: Ensure we have enough data to scan
-    const hasContent = activeProject.fullContent && activeProject.fullContent.length > 200;
+    // Lowered threshold to 50 chars to allow shorter abstracts/proposals
+    const hasContent = activeProject.fullContent && activeProject.fullContent.length > 50;
     const hasSpecimens = activeProject.specimens && activeProject.specimens.length > 0;
 
     // Allow scan with just content (paper-only mode) OR specimens
     if (!hasContent && !hasSpecimens) {
-        addLog({ module: 'Analysis', event: 'Deep Scan inhibited: Insufficient context.', status: 'warning' });
+        addLog({ module: 'Analysis', event: `Deep Scan inhibited: Insufficient context. (Content len: ${activeProject.fullContent?.length || 0})`, status: 'warning' });
+
+
         
         // Only add error if it's not already the last message to prevent spam
         const lastMsg = messages[messages.length - 1];
@@ -910,6 +913,10 @@ const RoadmapStep = ({ phase, title, desc, isActive, isRight, isWarning }: any) 
 // --- Sub-components ---
 
 const MetricRow = ({ label, value, status, tooltip }: { label: string, value: string, status: 'success' | 'warning' | 'critical' | 'info', tooltip?: string }) => {
+    // Check if value indicates a pending state (e.g. "0.00" or "0")
+    // Also consider N/A in info status as potentially pending/empty
+    const isPending = value === "0.00" || value === "0";
+    
     const colors = {
         success: 'text-cyan-400',
         warning: 'text-amber-400',
@@ -920,20 +927,26 @@ const MetricRow = ({ label, value, status, tooltip }: { label: string, value: st
         success: CheckCircle2,
         warning: AlertTriangle,
         critical: XCircle,
-        info: AlertTriangle
+        info: AlertTriangle 
     };
-    const Icon = icons[status];
+    
+    // Override status visuals if it looks like we're waiting for a scan (and not explicitly N/A)
+    const effectiveStatus = (isPending && status !== 'info') ? 'info' : status;
+    const displayValue = (isPending && status !== 'info') ? "--" : value;
+    
+    const Icon = icons[effectiveStatus];
 
     return (
         <div className="flex items-center justify-between text-sm group" title={tooltip}>
             <span className="text-slate-400 group-hover:text-white transition-colors">{label}</span>
             <div className="flex items-center gap-3">
-                <span className={`font-mono font-bold ${colors[status]}`}>{value}</span>
-                <Icon className={`w-3 h-3 ${colors[status]}`} />
+                <span className={`font-mono font-bold ${colors[effectiveStatus]}`}>{displayValue}</span>
+                <Icon className={`w-3 h-3 ${colors[effectiveStatus]}`} />
             </div>
         </div>
     )
 }
+
 
 const FlowStep = ({ label, status }: { label: string, status: 'success' | 'warning' | 'critical' | 'locked' }) => {
     const styles = {
