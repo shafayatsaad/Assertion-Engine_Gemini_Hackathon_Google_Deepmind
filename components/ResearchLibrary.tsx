@@ -36,7 +36,7 @@ export const ResearchLibrary: React.FC<ResearchLibraryProps> = ({ onNavigate }) 
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-emerald-500/30 selection:text-emerald-200">
+    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-indigo-500/30 selection:text-indigo-200">
       
       {/* Navigation */}
       <nav className="border-b border-white/5 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-40">
@@ -80,10 +80,6 @@ export const ResearchLibrary: React.FC<ResearchLibraryProps> = ({ onNavigate }) 
         {/* Breadcrumb */}
         <nav className="flex items-center text-sm font-medium text-slate-500 mb-6">
             <button onClick={() => onNavigate('dashboard')} className="hover:text-white transition-colors">Dashboard</button>
-            <ChevronRight className="w-4 h-4 mx-2 text-slate-700" />
-            <button onClick={() => onNavigate('new-project')} className="hover:text-white transition-colors">Project</button>
-            <ChevronRight className="w-4 h-4 mx-2 text-slate-700" />
-            <button onClick={() => onNavigate('analysis')} className="hover:text-white transition-colors">Analysis</button>
             <ChevronRight className="w-4 h-4 mx-2 text-slate-700" />
             <span className="text-emerald-400">Library</span>
         </nav>
@@ -187,10 +183,10 @@ export const ResearchLibrary: React.FC<ResearchLibraryProps> = ({ onNavigate }) 
 
 const ProjectCard = ({ id, title, status, progress, updated, statusColor, steps, onClick, onDelete, index = 0 }: any) => {
   const colors: any = {
-    emerald: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/20' },
-    blue: { bg: 'bg-cyan-500/10', text: 'text-cyan-400', border: 'border-cyan-500/20' },
-    amber: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/20' },
-    rose: { bg: 'bg-rose-500/10', text: 'text-rose-400', border: 'border-rose-500/20' },
+    emerald: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/20', glow: 'bg-emerald-500' },
+    blue: { bg: 'bg-cyan-500/10', text: 'text-cyan-400', border: 'border-cyan-500/20', glow: 'bg-cyan-500' },
+    amber: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/20', glow: 'bg-amber-500' },
+    rose: { bg: 'bg-rose-500/10', text: 'text-rose-400', border: 'border-rose-500/20', glow: 'bg-rose-500' },
   };
 
   const theme = colors[statusColor] || colors.blue;
@@ -203,74 +199,88 @@ const ProjectCard = ({ id, title, status, progress, updated, statusColor, steps,
       transition={{ duration: 0.6, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
       whileHover={{ y: -6, transition: { duration: 0.2 } }}
       onClick={onClick}
-      className="glass-card bg-slate-900/40 border border-white/5 rounded-2xl p-6 relative group overflow-hidden cursor-pointer hover:border-white/20 hover:bg-white/[0.03] transition-all"
+      className="relative rounded-3xl overflow-hidden cursor-pointer group border border-white/5 hover:border-white/20 transition-all duration-500"
     >
-      {/* Top Row */}
-      <div className="flex justify-between items-start mb-6">
-        <div className="flex items-center gap-3">
-          <span className={`px-2 py-1 rounded text-[10px] font-bold tracking-wider ${theme.bg} ${theme.text} border ${theme.border}`}>
-            {status}
-          </span>
-          <span className="text-xs font-mono text-slate-500">#{id}</span>
-        </div>
+        {/* Glass Background */}
+        <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md transition-colors group-hover:bg-slate-900/60" />
         
-        <button 
-          onClick={onDelete}
-          className="p-1.5 rounded bg-rose-500/10 border border-rose-500/20 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
-        >
-          <Trash2 className="w-3 h-3" />
-        </button>
-        
-        {/* Progress Circle */}
-        <div className="relative w-10 h-10 flex items-center justify-center">
-            <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-              <path
-                className="text-slate-800"
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="3"
-              />
-              <path
-                className={theme.text}
-                strokeDasharray={`${progress}, 100`}
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="3"
-              />
-            </svg>
-            <span className="absolute text-[9px] font-bold text-white">{progress}%</span>
-        </div>
-      </div>
+        {/* Gradient Glow */}
+        <div className={`absolute -top-20 -right-20 w-64 h-64 rounded-full blur-[80px] opacity-0 group-hover:opacity-20 transition-opacity duration-700 ${theme.glow}`} />
 
-      {/* Main Info */}
-      <div className="mb-8">
-        <h3 className="text-lg font-bold text-white mb-1 group-hover:text-emerald-400 transition-colors truncate">{title}</h3>
-        <p className="text-xs text-slate-500">Updated {updated}</p>
-      </div>
-
-      {/* Bottom Steps */}
-      <div className="grid grid-cols-3 gap-2 bg-slate-950/50 rounded-xl p-3 border border-white/5">
-        {steps.map((step: any, i: number) => {
-            let iconColor = "text-slate-600";
-            let textColor = "text-slate-600";
-            
-            if (step.state === 'done') { iconColor = "text-emerald-400"; textColor = "text-slate-400"; }
-            if (step.state === 'loading') { iconColor = "text-cyan-400 animate-spin"; textColor = "text-cyan-400"; }
-            if (step.state === 'warning') { iconColor = "text-amber-400"; textColor = "text-amber-400"; }
-            if (step.state === 'error') { iconColor = "text-rose-400"; textColor = "text-rose-400"; }
-            if (step.state === 'pending') { iconColor = "text-slate-600"; textColor = "text-slate-600"; }
-
-
-            return (
-                <div key={i} className="flex flex-col items-center justify-center text-center gap-1.5">
-                    <step.icon className={`w-4 h-4 ${iconColor}`} />
-                    <span className={`text-[9px] font-medium ${textColor}`}>{step.label}</span>
+        <div className="relative p-6 md:p-8 h-full flex flex-col">
+            {/* Top Row */}
+            <div className="flex justify-between items-start mb-6">
+                <div className="flex items-center gap-3">
+                    <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm ${theme.bg} ${theme.text} border ${theme.border}`}>
+                        {status}
+                    </span>
+                    <span className="text-xs font-mono text-slate-500 font-medium">#{id}</span>
                 </div>
-            )
-        })}
+                
+                <div className="flex items-center gap-3">
+                     {/* Progress Circle moved to header for compactness */}
+                     <div className="relative w-8 h-8 flex items-center justify-center">
+                        <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                          <path
+                            className="text-slate-800"
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                          />
+                          <path
+                            className={theme.text}
+                            strokeDasharray={`${progress}, 100`}
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                          />
+                        </svg>
+                        <span className="absolute text-[8px] font-bold text-white">{progress}%</span>
+                    </div>
+
+                    <button 
+                      onClick={onDelete}
+                      className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-500 opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-500 hover:text-white"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                </div>
+            </div>
+
+            {/* Main Info */}
+            <div className="mb-8 flex-grow">
+                <h3 className="text-xl font-bold text-white mb-2 group-hover:text-emerald-400 transition-colors leading-tight line-clamp-2">
+                    {title}
+                </h3>
+                <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                    <Clock className="w-3 h-3" />
+                    <span>Updated {updated}</span>
+                </div>
+            </div>
+
+            {/* Bottom Steps */}
+            <div className="grid grid-cols-3 gap-2 bg-slate-950/50 rounded-xl p-3 border border-white/5 mt-auto">
+                {steps.map((step: any, i: number) => {
+                    let iconColor = "text-slate-600";
+                    let textColor = "text-slate-600";
+                    let StepIcon = step.icon; 
+                    
+                    if (step.state === 'done') { iconColor = "text-emerald-400"; textColor = "text-slate-400"; }
+                    if (step.state === 'loading') { iconColor = "text-cyan-400 animate-spin"; textColor = "text-cyan-400"; }
+                    if (step.state === 'warning') { iconColor = "text-amber-400"; textColor = "text-amber-400"; }
+                    if (step.state === 'error') { iconColor = "text-rose-400"; textColor = "text-rose-400"; }
+                    
+                    return (
+                        <div key={i} className="flex flex-col items-center gap-1.5 text-center px-1">
+                             <StepIcon className={`w-3.5 h-3.5 ${iconColor}`} />
+                             <span className={`text-[9px] font-medium leading-tight ${textColor}`}>{step.label}</span>
+                        </div>
+                    );
+                })}
+            </div>
       </div>
     </motion.div>
   );
-}
+};
