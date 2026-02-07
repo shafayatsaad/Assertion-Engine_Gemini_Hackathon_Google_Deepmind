@@ -147,7 +147,12 @@ export const ResearchLibrary: React.FC<ResearchLibraryProps> = ({ onNavigate }) 
                 status={activeProjectId !== project.id && project.status === 'ANALYZING' ? 'PAUSED' : project.status}
                 progress={project.progress || 0}
                 updated={new Date(project.updated).toLocaleDateString()}
-                statusColor={activeProjectId !== project.id && project.status === 'ANALYZING' ? 'amber' : project.status === 'COMPLETED' ? 'emerald' : project.status === 'FAILED' ? 'rose' : 'blue'}
+                status={activeProjectId === project.id ? (project.status === 'ANALYZING' ? 'RUNNING' : project.status) : (project.status === 'ANALYZING' ? 'PAUSED' : project.status)}
+                statusColor={
+                    activeProjectId === project.id 
+                    ? (project.status === 'ANALYZING' ? 'emerald' : 'blue') 
+                    : (project.status === 'ANALYZING' ? 'amber' : project.status === 'FAILED' ? 'rose' : 'blue')
+                }
                 onClick={() => { setActiveProject(project.id); onNavigate('analysis'); }}
                 steps={[
                   { label: "PDF Parsed", state: "done", icon: FileText },
