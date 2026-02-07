@@ -192,6 +192,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
     const hasContent = activeProject.fullContent && activeProject.fullContent.length > 200;
     const hasSpecimens = activeProject.specimens && activeProject.specimens.length > 0;
 
+    // Allow scan with just content (paper-only mode) OR specimens
     if (!hasContent && !hasSpecimens) {
         addLog({ module: 'Analysis', event: 'Deep Scan inhibited: Insufficient context.', status: 'warning' });
         
@@ -206,6 +207,11 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
             timestamp: new Date().toLocaleTimeString()
         }]);
         return;
+    }
+
+    // Paper-only mode notification (informational, not blocking)
+    if (hasContent && !hasSpecimens) {
+        addLog({ module: 'Analysis', event: 'Running paper-only diagnostic (datasets recommended for full analysis)', status: 'info' });
     }
 
     setIsScanning(true);
@@ -487,9 +493,23 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                         <div className="flex items-end gap-4">
                             <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">DIAGNOSTIC REPORT</h2>
                             {activeProject && (
-                                <div className="hidden sm:block pb-1.5 px-2 bg-slate-800/50 border border-white/5 rounded text-[10px] font-mono text-emerald-500 animate-pulse uppercase">
-                                    Live Telemetry
-                                </div>
+                                <>
+                                    <div className="hidden sm:block pb-1.5 px-2 bg-slate-800/50 border border-white/5 rounded text-[10px] font-mono text-emerald-500 animate-pulse uppercase">
+                                        Live Telemetry
+                                    </div>
+                                    {/* Analysis Mode Indicator */}
+                                    {activeProject.specimens && activeProject.specimens.length > 0 ? (
+                                        <div className="hidden md:flex items-center gap-1.5 pb-1.5 px-2.5 bg-indigo-500/10 border border-indigo-500/30 rounded text-[10px] font-bold text-indigo-400 uppercase tracking-wider">
+                                            <Database className="w-3 h-3" />
+                                            Full Spectrum
+                                        </div>
+                                    ) : (
+                                        <div className="hidden md:flex items-center gap-1.5 pb-1.5 px-2.5 bg-cyan-500/10 border border-cyan-500/30 rounded text-[10px] font-bold text-cyan-400 uppercase tracking-wider">
+                                            <Shield className="w-3 h-3" />
+                                            Document Analysis
+                                        </div>
+                                    )}
+                                </>
                             )}
                         </div>
                     </div>
@@ -541,8 +561,9 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                              />
                              <MetricRow 
                                 label="Data Lineage" 
-                                value={metrics.dataLineage.toFixed(2)} 
-                                status={metrics.dataLineage > 0.5 ? "warning" : "critical"} 
+                                value={activeProject?.specimens && activeProject.specimens.length > 0 ? metrics.dataLineage.toFixed(2) : "N/A"} 
+                                status={activeProject?.specimens && activeProject.specimens.length > 0 ? (metrics.dataLineage > 0.5 ? "warning" : "critical") : "info"}
+                                tooltip={activeProject?.specimens && activeProject.specimens.length === 0 ? "Upload datasets in Specimen Lab for empirical validation" : undefined}
                              />
                              <MetricRow 
                                 label="Novelty Index" 
@@ -888,21 +909,23 @@ const RoadmapStep = ({ phase, title, desc, isActive, isRight, isWarning }: any) 
 
 // --- Sub-components ---
 
-const MetricRow = ({ label, value, status }: { label: string, value: string, status: 'success' | 'warning' | 'critical' }) => {
+const MetricRow = ({ label, value, status, tooltip }: { label: string, value: string, status: 'success' | 'warning' | 'critical' | 'info', tooltip?: string }) => {
     const colors = {
         success: 'text-cyan-400',
         warning: 'text-amber-400',
-        critical: 'text-indigo-500'
+        critical: 'text-indigo-500',
+        info: 'text-slate-500'
     };
     const icons = {
         success: CheckCircle2,
         warning: AlertTriangle,
-        critical: XCircle
+        critical: XCircle,
+        info: AlertTriangle
     };
     const Icon = icons[status];
 
     return (
-        <div className="flex items-center justify-between text-sm group">
+        <div className="flex items-center justify-between text-sm group" title={tooltip}>
             <span className="text-slate-400 group-hover:text-white transition-colors">{label}</span>
             <div className="flex items-center gap-3">
                 <span className={`font-mono font-bold ${colors[status]}`}>{value}</span>
