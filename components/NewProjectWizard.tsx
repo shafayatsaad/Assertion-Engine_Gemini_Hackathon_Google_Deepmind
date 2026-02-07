@@ -73,12 +73,26 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
             reader.onerror = reject;
             
             if (file.type === 'application/pdf') {
-                const text = await extractPdfText(file);
-                resolve(text);
+                try {
+                    const text = await extractPdfText(file);
+                    resolve(text);
+                } catch (pdfError) {
+                    console.warn("PDF specific extraction failed, falling back to text", pdfError);
+                    // Fallback to reading as text, though it might be raw PDF data
+                    // Better to resolve with empty or error string than reject?
+                    resolve(`[PDF Content Extraction Failed]`);
+                }
             } else {
                 reader.readAsText(file);
             }
         });
+
+        if (!content || content.length < 50) {
+            console.warn("Extracted content is very short:", content);
+            addLog({ module: 'Intake', event: `Warning: Low content extracted from ${file.name} (${content?.length || 0} chars)`, status: 'warning' });
+        } else {
+            addLog({ module: 'Intake', event: `Read ${content.length} characters from ${file.name}`, status: 'success' });
+        }
 
         setFullContent(content);
         setUploadProgress(50);
