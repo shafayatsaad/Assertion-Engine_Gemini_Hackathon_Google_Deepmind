@@ -24,6 +24,8 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../AppContext';
 import { ProfileDropdown } from './ProfileDropdown';
+import { MobileNav } from './MobileNav';
+import { Menu } from 'lucide-react';
 
 interface DashboardProps {
   onNavigate: (page: 'landing' | 'profile' | 'settings' | 'dashboard' | 'newproject' | 'library' | 'analysis') => void;
@@ -32,6 +34,7 @@ interface DashboardProps {
 export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isLogsOpen, setIsLogsOpen] = useState(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   
   const { user, logs, projects, getActiveProject, setActiveProject, deleteProject, clearLogs, activeProjectId } = useApp();
   
@@ -72,6 +75,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             >
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">New Project</span>
+            </button>
+            <button 
+              onClick={() => setIsMobileNavOpen(true)}
+              className="p-2 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-white md:hidden"
+            >
+              <Menu className="w-5 h-5" />
             </button>
             <ProfileDropdown onNavigate={onNavigate} />
           </div>
@@ -296,6 +305,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         </motion.div>
 
       </main>
+
+      {/* Mobile Navigation */}
+      <MobileNav 
+        isOpen={isMobileNavOpen} 
+        onClose={() => setIsMobileNavOpen(false)} 
+        onNavigate={onNavigate}
+        currentPage="dashboard"
+      />
 
       {/* Modals */}
       <AnimatePresence>
