@@ -94,6 +94,7 @@ export interface Project {
   fullContent?: string;
   scopeFocus?: string[];
   scopeAbort?: string[];
+  roadmap?: { phase: number, title: string, desc: string }[];
 }
 
 export interface Log {
