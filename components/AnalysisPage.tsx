@@ -231,18 +231,22 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
             3. Novelty Index (0-100): How unique is this compared to standard literature?
             4. Radar Map: 5 technical coordinates (0-100) specifically for this research topic.
             5. Vulnerability Alerts: Identify 3 HIGHLY SPECIFIC logical or technical risks found IN THE CONTENT.
-               ${isPaperOnly ? 'Focus on METHODOLOGICAL GAPS. Provide actionable steps to validate the theory. Do NOT just say "upload data".' : 'Focus on data inconsistencies and threats.'}
-            6. Mission Protocol: Provide 3 granular, technical Primary Objectives and 3 extremely specific Mission Abort items (out-of-scope).
-            7. Operational Status: Phase (0-4).
+               RETURN AS ARRAY OF OBJECTS: [{ "type": "CRITICAL"|"MODERATE"|"SUGGESTION", "title": "Short Title", "desc": "Specific description", "riskScore": "X/10", "action": "RESOLVE"|"OPTIMIZE"|"SELECT" }]
+            6. Mission Protocol: Provide 3 granular, technical Primary Objectives (scopeFocus) and 3 formatted Mission Abort items (scopeAbort).
+               RETURN AS ARRAY OF STRINGS: ["TITLE: Description", ...]
+            7. Operational Roadmap: Generate 5 specific milestones for THIS project.
+               RETURN AS ARRAY OF OBJECTS: [{ "phase": 0-4, "title": "Phase Title", "desc": "Phase Description" }]
+            8. Operational Status: Current Phase (0-4).
 
             Return JSON: { 
                 "logic": number, 
                 "lineage": number, 
                 "novelty": number, 
                 "radar": [number, number, number, number, number],
-                "vulnerabilities": [...],
-                "scopeFocus": string[],
-                "scopeAbort": string[],
+                "vulnerabilities": [{...}, ...],
+                "scopeFocus": ["Title: Desc", ...],
+                "scopeAbort": ["Title: Desc", ...],
+                "roadmap": [{ "phase": 0, "title": "...", "desc": "..." }, ...],
                 "currentPhase": number,
                 "summary": "2-sentence technical summary of findings. Focus on the validity of the research proposal."
             }
@@ -263,6 +267,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
             vulnerabilities: data.vulnerabilities || [],
             scopeFocus: data.scopeFocus || [],
             scopeAbort: data.scopeAbort || [],
+            roadmap: data.roadmap || [],
             progress: data.currentPhase !== undefined ? (data.currentPhase + 1) * 20 : activeProject.progress
         });
 
