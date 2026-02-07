@@ -125,11 +125,15 @@ const PageTransition: React.FC<PageTransitionProps> = ({ children, className = "
 
 const MainApp = () => {
   type Page = 'landing' | 'signin' | 'signup' | 'profile' | 'settings' | 'dashboard' | 'newproject' | 'library' | 'specimens' | 'analysis' | 'novelty';
-  const [currentPage, setCurrentPage] = useState<Page>('landing');
-  const { user } = useApp();
+  const [currentPage, setCurrentPage] = useState<Page>(() => {
+    const saved = localStorage.getItem('assertions_current_page');
+    return (saved as Page) || 'landing';
+  });
+  const { user, activeProjectId, projects, setActiveProject } = useApp();
 
   const handleNavigate = (page: Page) => {
     setCurrentPage(page);
+    localStorage.setItem('assertions_current_page', page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -139,6 +143,22 @@ const MainApp = () => {
       handleNavigate('dashboard');
     }
   }, [user, currentPage]);
+
+  // Safety: If on analysis page but no project selected, go to dashboard
+  useEffect(() => {
+    if (currentPage === 'analysis' && !activeProjectId) {
+         // Try to restore from projects if possible, or redirect
+         const savedProjId = localStorage.getItem('assertions_active_project_id');
+         if (savedProjId && projects.find(p => p.id === savedProjId)) {
+             setActiveProject(savedProjId);
+         } else if (projects.length > 0) {
+             // Default to most recent? Or just redirect
+             handleNavigate('dashboard');
+         } else {
+             handleNavigate('dashboard');
+         }
+    }
+  }, [currentPage, activeProjectId, projects]);
 
   return (
     <div className="bg-slate-950 text-slate-200 font-sans selection:bg-emerald-500/30 selection:text-emerald-200">
