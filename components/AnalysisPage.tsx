@@ -751,39 +751,29 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                          <div className="absolute left-6 md:left-1/2 md:-translate-x-1/2 top-0 h-full w-px bg-slate-800 shadow-[0_0_15px_rgba(99,102,241,0.1)]" />
                          
                          <div className="space-y-16">
-                             <RoadmapStep 
-                                phase={0} 
-                                title="Genesis Assertion" 
-                                desc="Atomic extraction of the research kernel. Defining logical parameters and foundational constraints." 
-                                isActive={true} 
-                             />
-                             <RoadmapStep 
-                                phase={1} 
-                                title="Specimen Ingestion" 
-                                desc="Hydrating the hypothesis with high-fidelity datasets. Verification of signal-to-noise ratios." 
-                                isRight={true}
-                                isActive={activeProject?.progress ? activeProject.progress >= 20 : false}
-                             />
-                             <RoadmapStep 
-                                phase={2} 
-                                title="Collision Search" 
-                                desc="SOTA technical intersection check. Identifying logical overlaps and existing research threats." 
-                                isActive={activeProject?.progress ? activeProject.progress >= 40 : false}
-                             />
-                             <RoadmapStep 
-                                phase={3} 
-                                title="Diagnostic HUD" 
-                                desc="Deep logic consistency scan and multi-layered vulnerability assessment." 
-                                isRight={true}
-                                isActive={activeProject?.progress ? activeProject.progress >= 60 : false}
-                             />
-                             <RoadmapStep 
-                                phase={4} 
-                                title="Final Synthesis" 
-                                desc="Formal report generation and operational handover of verified assertion data." 
-                                isWarning={activeProject?.progress ? activeProject.progress >= 80 : false}
-                                isActive={activeProject?.progress ? activeProject.progress >= 80 : false}
-                             />
+                            {activeProject?.roadmap && activeProject.roadmap.length > 0 ? (
+                                activeProject.roadmap.map((step, i) => (
+                                    <RoadmapStep 
+                                        key={i}
+                                        phase={step.phase} 
+                                        title={step.title} 
+                                        desc={step.desc} 
+                                        isActive={activeProject.progress >= (step.phase + 1) * 20}
+                                        isRight={i % 2 !== 0}
+                                        isWarning={step.phase === 4 && activeProject.progress >= 80}
+                                    />
+                                ))
+                            ) : (
+                                <div className="flex flex-col items-center justify-center py-20 text-center relative z-10 bg-slate-950">
+                                    <div className="w-16 h-16 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center mb-6 animate-pulse">
+                                        <Activity className="w-8 h-8 text-slate-700" />
+                                    </div>
+                                    <h3 className="text-slate-500 font-bold text-sm uppercase tracking-wider mb-2">Roadmap Not Generated</h3>
+                                    <p className="text-slate-600 text-xs max-w-sm">
+                                        Run diagnostic scan to generate a project-specific operational timeline.
+                                    </p>
+                                </div>
+                            )}
                          </div>
                      </div>
                 </div>
