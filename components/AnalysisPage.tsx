@@ -89,7 +89,14 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
     });
 
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const storedKey = localStorage.getItem('ae_api_key');
+        const apiKey = storedKey || process.env.API_KEY;
+        
+        if (!apiKey) {
+            throw new Error("Missing API Key. Please configure it in Settings.");
+        }
+
+        const ai = new GoogleGenAI({ apiKey });
         const systemPrompt = `You are an advanced academic research validator AI named "Assertion Engine". 
         Your goal is to stress-test the user's research hypothesis. 
         Current Project Title: ${activeProject.title}
@@ -98,8 +105,10 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
         
         Be rigorous, slightly critical but constructive. Focus on identifying logical fallacies, data gaps, and novelty issues. Use markdown for formatting.`;
 
+        const storedModel = localStorage.getItem('ae_api_model') || 'gemini-1.5-flash';
+            
         const response = await ai.models.generateContent({
-            model: 'gemini-3-pro-preview',
+            model: storedModel,
             contents: [
                 { role: 'user', parts: [{ text: systemPrompt }] }, 
                 ...newMessages.filter(m => m.id !== 'init').map(m => ({
