@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Search, 
   Filter, 
@@ -24,6 +24,8 @@ import {
 import { motion } from 'framer-motion';
 import { useApp } from '../AppContext';
 import { ProfileDropdown } from './ProfileDropdown';
+import { MobileNav } from './MobileNav';
+import { Menu } from 'lucide-react';
 
 interface ResearchLibraryProps {
   onNavigate: (page: 'dashboard' | 'library' | 'new-project' | 'profile' | 'analysis') => void;
@@ -31,6 +33,7 @@ interface ResearchLibraryProps {
 
 export const ResearchLibrary: React.FC<ResearchLibraryProps> = ({ onNavigate }) => {
   const { projects, setActiveProject, deleteProject, user, activeProjectId } = useApp();
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-emerald-500/30 selection:text-emerald-200">
@@ -60,6 +63,12 @@ export const ResearchLibrary: React.FC<ResearchLibraryProps> = ({ onNavigate }) 
               className="px-3 py-1.5 md:px-4 md:py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs md:text-sm font-bold rounded-lg transition-all shadow-[0_0_15px_-5px_rgba(16,185,129,0.3)]"
             >
               New Project
+            </button>
+            <button 
+              onClick={() => setIsMobileNavOpen(true)}
+              className="p-2 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-white md:hidden"
+            >
+              <Menu className="w-5 h-5" />
             </button>
             <ProfileDropdown onNavigate={onNavigate} />
           </div>
@@ -161,6 +170,13 @@ export const ResearchLibrary: React.FC<ResearchLibraryProps> = ({ onNavigate }) 
 
         </div>
       </main>
+
+      <MobileNav 
+        isOpen={isMobileNavOpen} 
+        onClose={() => setIsMobileNavOpen(false)} 
+        onNavigate={onNavigate}
+        currentPage="library"
+      />
     </div>
   );
 };
