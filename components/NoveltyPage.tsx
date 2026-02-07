@@ -39,13 +39,15 @@ export const NoveltyPage: React.FC<NoveltyPageProps> = ({ onNavigate }) => {
       addLog({ module: 'Novelty', event: `Started literature scan for ${activeProject.title}`, status: 'info' });
 
       try {
-        const docContent = useDocumentContext ? (activeProject.fullContent?.slice(0, 8000) || '') : '';
+        const docContent = useDocumentContext ? (activeProject.fullContent?.slice(0, 8000) || activeProject.specimens?.map((s:any) => s.content).join('\n').slice(0, 8000) || '') : '';
+        console.log('📄 Novelty Scan Context Length:', docContent.length);
+        
         const systemPrompt = `
-            You are a rigorous academic novelty engine. Your task is to analyze the user's research hypothesis ${useDocumentContext ? 'AND FULL DOCUMENT CONTENT' : ''} to find "conflicting" or "related" academic papers.
+            You are a rigorous academic novelty engine. Your task is to analyze the user's research hypothesis ${useDocumentContext ? 'AND DOCUMENT CONTENT' : ''} to find "conflicting" or "related" academic papers.
             
             Current Hypothesis: "${activeProject.hypothesis}"
             Assumptions: ${activeProject.assumptions.join(', ')}
-            Content (User's Uploaded Paper): ${docContent || 'No full content used.'}
+            Content (User's Uploaded Paper/Specimens): ${docContent || 'No full content used.'}
             ${searchTerm ? `Specific Focus / Keywords: "${searchTerm}"` : ''}
 
             CRITICAL INSTRUCTION: 
@@ -166,6 +168,8 @@ export const NoveltyPage: React.FC<NoveltyPageProps> = ({ onNavigate }) => {
         <nav className="flex items-center text-sm font-medium text-slate-500 mb-6">
             <button onClick={() => onNavigate('dashboard')} className="hover:text-white transition-colors">Dashboard</button>
             <ChevronRight className="w-4 h-4 mx-2 text-slate-700" />
+            <button onClick={() => onNavigate('analysis')} className="hover:text-white transition-colors">Analysis</button>
+            <ChevronRight className="w-4 h-4 mx-2 text-slate-700" />
             <span className="text-cyan-400">Novelty</span>
         </nav>
 
@@ -195,15 +199,31 @@ export const NoveltyPage: React.FC<NoveltyPageProps> = ({ onNavigate }) => {
                         onChange={(e) => setSearchTerm(e.target.value)}
                         placeholder={activeProject ? "Enter thesis keywords or upload abstract..." : "Create a project to scan..."}
                         disabled={!activeProject}
-                        className="w-full bg-slate-900/50 border border-white/10 rounded-lg pl-12 pr-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-all placeholder:text-slate-600 disabled:opacity-50"
+                        className="w-full bg-slate-900/50 border border-white/10 rounded-lg pl-12 pr-40 py-3 text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-all placeholder:text-slate-600 disabled:opacity-50"
                     />
-                    {activeProject?.fullContent && (
-                         <button 
-                            onClick={() => setUseDocumentContext(!useDocumentContext)}
-                            className={`absolute right-3 top-2.5 px-3 py-1 rounded text-[10px] font-medium border transition-all ${useDocumentContext ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-slate-300'}`}
-                         >
-                            {useDocumentContext ? 'Analzying Full Doc' : 'Ignore Full Doc'}
-                         </button>
+                    {activeProject && (
+                        <button 
+                            onClick={() => {
+                                if (activeProject.fullContent || activeProject.specimens?.length > 0) {
+                                    setUseDocumentContext(!useDocumentContext);
+                                }
+                            }}
+                            disabled={!activeProject.fullContent && (!activeProject.specimens || activeProject.specimens.length === 0)}
+                            className={`absolute right-3 top-2.5 px-3 py-1 rounded text-[10px] font-medium border transition-all ${
+                                !activeProject.fullContent && (!activeProject.specimens || activeProject.specimens.length === 0)
+                                    ? 'bg-slate-800/50 text-slate-600 border-slate-700/50 cursor-not-allowed'
+                                    : useDocumentContext 
+                                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20' 
+                                        : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-slate-300 hover:border-slate-600'
+                            }`}
+                        >
+                            {!activeProject.fullContent && (!activeProject.specimens || activeProject.specimens.length === 0)
+                                ? 'No Document'
+                                : useDocumentContext 
+                                    ? 'Analyzing Full Doc' 
+                                    : 'Ignore Full Doc'
+                            }
+                        </button>
                     )}
                 </div>
                 <button 
