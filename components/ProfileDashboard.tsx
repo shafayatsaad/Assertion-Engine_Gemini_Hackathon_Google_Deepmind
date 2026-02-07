@@ -21,6 +21,7 @@ import {
   LayoutDashboard,
   Menu,
   X,
+  XCircle,
   Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -490,6 +491,8 @@ const ApiKeysView = ({ onNavigate }: { onNavigate: any }) => {
     const [apiKey, setApiKey] = useState('');
     const [status, setStatus] = useState<'idle' | 'connecting' | 'connected' | 'error' | 'quota'>('idle');
     const [detectedModel, setDetectedModel] = useState<string | null>(null);
+    const [manualModel, setManualModel] = useState<string | null>(null);
+    const [debugInfo, setDebugInfo] = useState<string | null>(null);
 
     // Universal Key State
     const [showKey2, setShowKey2] = useState(false);
@@ -502,9 +505,11 @@ const ApiKeysView = ({ onNavigate }: { onNavigate: any }) => {
         // Load Gemini
         const storedKey = localStorage.getItem('ae_api_key');
         const storedModel = localStorage.getItem('ae_api_model');
+        const storedManual = localStorage.getItem('ae_manual_model');
         if (storedKey) {
             setApiKey(storedKey);
             if (storedModel) setDetectedModel(storedModel);
+            if (storedManual) setManualModel(storedManual);
             setStatus('connected');
         }
 
@@ -595,25 +600,26 @@ const ApiKeysView = ({ onNavigate }: { onNavigate: any }) => {
     };
 
     const handleConnect = async () => {
-        if (!apiKey.trim()) return;
+        if (!apiKey.trim() || status === 'connecting') return;
         
         setStatus('connecting');
         setDetectedModel(null);
+        setDebugInfo(null);
         
         try {
-            // Dynamically import to avoid issues if package missing in this chunk
-            const { GoogleGenAI } = await import("@google/genai");
-            const client = new GoogleGenAI({ apiKey: apiKey });
+            // Dynamically import official SDK
+            const { GoogleGenerativeAI } = await import("@google/generative-ai");
+            const client = new GoogleGenerativeAI(apiKey);
             
             console.log('🔌 Testing connection to Google AI...');
 
             // List of models to try in order of preference
-            // Prioritize 1.5-flash as it is the most stable free tier model
-            const candidateModels = [
+            // Prioritize stable Flash models. Avoid Pro models in auto-discovery to save quota.
+            const candidateModels = manualModel ? [manualModel] : [
                 'gemini-1.5-flash', 
-                'gemini-2.0-flash', 
-                'gemini-1.5-pro',
-                'gemini-1.0-pro'
+                'gemini-1.5-flash-8b',
+                'gemini-2.0-flash',
+                'gemini-1.5-pro'
             ];
 
             let bestModel = null;
@@ -623,22 +629,54 @@ const ApiKeysView = ({ onNavigate }: { onNavigate: any }) => {
             for (const modelName of candidateModels) {
                 try {
                     console.log(`Trying model: ${modelName}...`);
-                    const response = await client.models.generateContent({
-                        model: modelName, 
-                        contents: [{ role: 'user', parts: [{ text: 'Ping' }] }]
-                    });
+                    const model = client.getGenerativeModel({ model: modelName });
+                    
+                    // Use a very tiny prompt to test connectivity
+                    const result = await model.generateContent("ping");
+                    const response = await result.response;
+                    
                     console.log(`✅ Success with ${modelName}`);
                     bestModel = modelName;
                     break; // Found a perfectly working model!
                 } catch (error: any) {
-                    console.warn(`❌ Failed with ${modelName}:`, error.message);
-                    lastError = error;
+                    const msg = error.message || error.toString();
+                    const status = error.status || 0;
                     
-                    // If we hit Quota, save this as a backup "valid key" indicator, but keep looking for a working model
-                    if (error.message?.includes('429') || error.status === 429 || error.toString().includes('Quota')) {
-                        console.warn(`⚠️ Quota exceeded on ${modelName}, continuing search...`);
-                        if (!quotaModel) quotaModel = modelName;
+                    console.warn(`❌ Failed with ${modelName}:`, msg);
+                    lastError = error;
+
+                    // Capture error details for diagnostic trace
+                    const diagError = {
+                        model: modelName,
+                        message: msg,
+                        status: status,
+                        code: error.code,
+                        details: error.details
+                    };
+                    setDebugInfo(JSON.stringify(diagError, null, 2));
+                    
+                    // 1. If Invalid Key (403/401), STOP EVERYTHING. No point trying other models.
+                    if (status === 403 || status === 401 || msg.includes('API_KEY_INVALID') || msg.includes('invalid') || msg.includes('403')) {
+                        console.error('🚫 Critical: Invalid API Key. Stopping discovery.');
+                        quotaModel = null; // Don't even treat as quota
+                        break; 
                     }
+
+                    // 2. If Quota (429), check for "limit: 0" (provisioning/regional issue)
+                    if (status === 429 || msg.includes('429') || msg.includes('Quota')) {
+                        console.warn(`⚠️ Quota issue on ${modelName}.`);
+                        
+                        if (msg.includes('limit: 0')) {
+                            console.error('🚫 Critical: Limit is 0. Project/Account restriction.');
+                            lastError = new Error(`ZERO_QUOTA: ${modelName} is disabled for this key (Limit: 0). Check Google AI Studio project settings.`);
+                            // Continue loop to see if other models have > 0 limit
+                        } else {
+                            quotaModel = modelName;
+                            break; // Regular quota reached, stop trying for this minute
+                        }
+                    }
+
+                    // 3. Otherwise (404/Unknown), continue to next model
                 }
             }
 
@@ -663,18 +701,21 @@ const ApiKeysView = ({ onNavigate }: { onNavigate: any }) => {
         } catch (error: any) {
             console.error('❌ API Key Validation Failed:', error);
             
-            // Re-check for quota in case it fell through (unlikely with loop logic but safe)
+            // Capture raw error for diagnostic
+            const rawError = {
+                message: error.message || error.toString(),
+                status: error.status,
+                name: error.name,
+                code: error.code,
+                cause: error.cause
+            };
+            setDebugInfo(JSON.stringify(rawError, null, 2));
+
+            // Re-check for quota in case it fell through
             if (error.message?.includes('429') || error.status === 429 || error.toString().includes('Quota')) {
                  localStorage.setItem('ae_api_key', apiKey);
                  setStatus('quota');
                  return;
-            }
-
-            // Check for specific error types
-            if (error.message?.includes('400')) {
-                 console.error('⚠️ Bad Request - likely invalid model name or parameters');
-            } else if (error.message?.includes('403') || error.message?.includes('401')) {
-                 console.error('🚫 Forbidden - API Key invalid or lacks permissions');
             }
             
             setStatus('error');
@@ -868,12 +909,62 @@ const ApiKeysView = ({ onNavigate }: { onNavigate: any }) => {
                     status === 'error' ? "text-rose-500" : 
                     "text-slate-500"
                 }>
-                    {status === 'connected' ? "Status: Connected to Neural Core" : 
-                     status === 'quota' ? "Status: Connected (Quota Exceeded)" :
+                    {status === 'connected' ? `Status: Connected to ${detectedModel}` : 
+                     status === 'quota' ? `Status: Connected to ${detectedModel} (Quota Exceeded)` :
                      status === 'error' ? "Status: Connection Failed (Check Key)" : 
                      "Status: Not Connected"}
                 </span>
             </div>
+
+            {/* Manual Model Override (Always visible to allow troubleshooting) */}
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-950/50 border border-white/5">
+                <div className="text-[9px] font-mono text-slate-500 uppercase">Core Model:</div>
+                <select 
+                    value={manualModel || detectedModel || 'gemini-1.5-flash'}
+                    onChange={(e) => {
+                        const val = e.target.value;
+                        setManualModel(val);
+                        localStorage.setItem('ae_manual_model', val);
+                        if (status === 'connected' || status === 'quota') {
+                            localStorage.setItem('ae_api_model', val);
+                            setDetectedModel(val);
+                        }
+                    }}
+                    className="bg-transparent text-[10px] font-mono text-cyan-400 focus:outline-none border-none cursor-pointer flex-1"
+                >
+                    <option value="gemini-1.5-flash">gemini-1.5-flash (Standard)</option>
+                    <option value="gemini-1.5-flash-8b">gemini-1.5-flash-8b (High Availability)</option>
+                    <option value="gemini-2.0-flash">gemini-2.0-flash (Next Gen)</option>
+                    <option value="gemini-1.5-pro">gemini-1.5-pro (Quota Restricted)</option>
+                </select>
+                {manualModel && (
+                    <button 
+                        onClick={() => {
+                            setManualModel(null);
+                            localStorage.removeItem('ae_manual_model');
+                        }}
+                        className="text-[9px] text-rose-500 hover:text-rose-400 underline"
+                    >
+                        Reset to Auto
+                    </button>
+                )}
+            </div>
+
+            {/* Diagnostic Log (Only visible on error/quota) */}
+            {(status === 'error' || status === 'quota') && debugInfo && (
+                <div className="p-4 rounded-xl bg-slate-950 border border-white/5 space-y-2">
+                    <div className="text-[10px] font-mono text-slate-500 uppercase flex justify-between">
+                        <span>Diagnostic Trace</span>
+                        <span className="text-rose-500">Error Details</span>
+                    </div>
+                    <pre className="text-[10px] font-mono text-rose-400 overflow-x-auto whitespace-pre-wrap max-h-32 overflow-y-auto">
+                        {debugInfo}
+                    </pre>
+                    <p className="text-[9px] text-slate-500 leading-tight">
+                        Note: 404 means the model name is restricted for your region/key. 429 with "limit: 0" means it's disabled in Cloud Console.
+                    </p>
+                </div>
+            )}
         </div>
 
         </div>
@@ -892,7 +983,17 @@ const ApiKeysView = ({ onNavigate }: { onNavigate: any }) => {
         </div>
         </div>
 
-        <div className="flex justify-end pt-4">
+        <div className="flex justify-between items-center pt-4">
+             <button 
+                onClick={() => {
+                    localStorage.clear();
+                    window.location.reload();
+                }}
+                className="text-[10px] font-mono text-slate-600 hover:text-rose-400 transition-colors flex items-center gap-1"
+             >
+                <XCircle className="w-3 h-3" />
+                Force System Reset (Clears Local Storage)
+             </button>
              <SaveButton onClick={() => {}} />
         </div>
     </div>
