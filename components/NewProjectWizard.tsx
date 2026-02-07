@@ -16,6 +16,8 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../AppContext';
 import { ProfileDropdown } from './ProfileDropdown';
+import { MobileNav } from './MobileNav';
+import { Menu } from 'lucide-react';
 import { callAI } from '../lib/ai';
 
 interface NewProjectWizardProps {
@@ -32,6 +34,7 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
   const [uploadProgress, setUploadProgress] = useState(0);
   const [fullContent, setFullContent] = useState('');
   const [initialMetrics, setInitialMetrics] = useState<any>(null);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const { createProject, addLog } = useApp();
 
   const extractPdfText = async (file: File): Promise<string> => {
@@ -167,6 +170,12 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
           </nav>
 
           <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setIsMobileNavOpen(true)}
+              className="p-2 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-white md:hidden"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
             <ProfileDropdown onNavigate={onNavigate} />
           </div>
         </div>
@@ -377,6 +386,13 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
             </div>
          </div>
       </footer>
+
+      <MobileNav 
+        isOpen={isMobileNavOpen} 
+        onClose={() => setIsMobileNavOpen(false)} 
+        onNavigate={onNavigate}
+        currentPage="new-project"
+      />
     </div>
   );
 };
