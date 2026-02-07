@@ -144,7 +144,6 @@ export const ResearchLibrary: React.FC<ResearchLibraryProps> = ({ onNavigate }) 
                 key={project.id}
                 id={project.id}
                 title={project.title}
-                status={activeProjectId !== project.id && project.status === 'ANALYZING' ? 'PAUSED' : project.status}
                 progress={project.progress || 0}
                 updated={new Date(project.updated).toLocaleDateString()}
                 status={activeProjectId === project.id ? (project.status === 'ANALYZING' ? 'RUNNING' : project.status) : (project.status === 'ANALYZING' ? 'PAUSED' : project.status)}
