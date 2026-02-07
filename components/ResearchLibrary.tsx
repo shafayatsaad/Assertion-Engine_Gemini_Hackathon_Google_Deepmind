@@ -18,7 +18,8 @@ import {
   Database,
   ScanLine,
   ChevronRight,
-  User
+  User,
+  Trash2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useApp } from '../AppContext';
@@ -29,7 +30,7 @@ interface ResearchLibraryProps {
 }
 
 export const ResearchLibrary: React.FC<ResearchLibraryProps> = ({ onNavigate }) => {
-  const { projects, setActiveProject, user } = useApp();
+  const { projects, setActiveProject, deleteProject, user, activeProjectId } = useApp();
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-emerald-500/30 selection:text-emerald-200">
@@ -46,8 +47,9 @@ export const ResearchLibrary: React.FC<ResearchLibraryProps> = ({ onNavigate }) 
             </button>
             
             <div className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-500">
-              <button onClick={() => onNavigate('dashboard')} className="hover:text-white transition-colors">Dashboard</button>
+            <button onClick={() => onNavigate('dashboard')} className="hover:text-white transition-colors">Dashboard</button>
               <button className="text-white">Library</button>
+              <button onClick={() => onNavigate('specimens')} className="hover:text-white transition-colors">Dataset</button>
               <button onClick={() => onNavigate('profile')} className="hover:text-white transition-colors">Settings</button>
             </div>
           </div>
@@ -133,10 +135,10 @@ export const ResearchLibrary: React.FC<ResearchLibraryProps> = ({ onNavigate }) 
                 key={project.id}
                 id={project.id}
                 title={project.title}
-                status={project.status}
+                status={activeProjectId !== project.id && project.status === 'ANALYZING' ? 'PAUSED' : project.status}
                 progress={project.progress || 0}
                 updated={new Date(project.updated).toLocaleDateString()}
-                statusColor={project.status === 'COMPLETED' ? 'emerald' : project.status === 'FAILED' ? 'rose' : 'blue'}
+                statusColor={activeProjectId !== project.id && project.status === 'ANALYZING' ? 'amber' : project.status === 'COMPLETED' ? 'emerald' : project.status === 'FAILED' ? 'rose' : 'blue'}
                 onClick={() => { setActiveProject(project.id); onNavigate('analysis'); }}
                 steps={[
                   { label: "PDF Parsed", state: "done", icon: FileText },
@@ -144,6 +146,12 @@ export const ResearchLibrary: React.FC<ResearchLibraryProps> = ({ onNavigate }) 
                   { label: "Verified", state: project.status === 'COMPLETED' ? 'done' : 'pending', icon: CheckCircle2 }
                 ]}
                 index={index}
+                onDelete={async (e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  if (confirm("Permanently delete this project?")) {
+                    await deleteProject(project.id);
+                  }
+                }}
              />
           )) : (
             <div className="col-span-full text-center py-20 text-slate-500">
@@ -157,7 +165,7 @@ export const ResearchLibrary: React.FC<ResearchLibraryProps> = ({ onNavigate }) 
   );
 };
 
-const ProjectCard = ({ id, title, status, progress, updated, statusColor, steps, onClick, index = 0 }: any) => {
+const ProjectCard = ({ id, title, status, progress, updated, statusColor, steps, onClick, onDelete, index = 0 }: any) => {
   const colors: any = {
     emerald: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/20' },
     blue: { bg: 'bg-cyan-500/10', text: 'text-cyan-400', border: 'border-cyan-500/20' },
@@ -185,6 +193,13 @@ const ProjectCard = ({ id, title, status, progress, updated, statusColor, steps,
           </span>
           <span className="text-xs font-mono text-slate-500">#{id}</span>
         </div>
+        
+        <button 
+          onClick={onDelete}
+          className="p-1.5 rounded bg-rose-500/10 border border-rose-500/20 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          <Trash2 className="w-3 h-3" />
+        </button>
         
         {/* Progress Circle */}
         <div className="relative w-10 h-10 flex items-center justify-center">
