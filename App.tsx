@@ -146,16 +146,23 @@ const MainApp = () => {
   }, [user, currentPage]);
 
   // Safety: If on analysis page but no project selected, go to dashboard
+  // Safety: If on analysis/novelty page but no project selected, try to restore or redirect
   useEffect(() => {
-    if (currentPage === 'analysis' && !activeProjectId) {
-         // Try to restore from projects if possible, or redirect
+    if ((currentPage === 'analysis' || currentPage === 'novelty') && !activeProjectId) {
+         // Try to restore from localStorage
          const savedProjId = localStorage.getItem('assertions_active_project_id');
-         if (savedProjId && projects.find(p => p.id === savedProjId)) {
-             setActiveProject(savedProjId);
+         // Check both string and number types just in case
+         const foundProject = projects.find(p => p.id == savedProjId) || projects[0];
+
+         if (foundProject) {
+             setActiveProject(foundProject.id);
+             console.log('🔄 Restored active project:', foundProject.title);
          } else if (projects.length > 0) {
-             // Default to most recent? Or just redirect
-             handleNavigate('dashboard');
+             // Default to most recent
+             setActiveProject(projects[0].id);
          } else {
+             // Truly no projects, go to dashboard
+             console.warn('⚠️ No projects found, redirecting to dashboard');
              handleNavigate('dashboard');
          }
     }
