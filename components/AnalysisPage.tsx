@@ -217,14 +217,16 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
             ASSUMPTIONS: ${activeProject.assumptions.join(', ')}
             CONTENT: ${activeProject.fullContent?.slice(0, 10000) || 'See Specimens'}
             SPECIMEN COUNT: ${activeProject.specimens?.length || 0}
+            HAS_SPECIMENS: ${activeProject.specimens && activeProject.specimens.length > 0}
 
             TASK:
             1. Logic Consistency (0-100): How cohesive is the argument?
             2. Data Lineage (0-100): How well do the specimens support the hypothesis?
             3. Novelty Index (0-100): How unique is this compared to standard literature?
             4. Radar Map: 5 technical coordinates (0-100) specifically for this research topic.
-            5. Vulnerability Alerts: Identify 3 HIGHLY SPECIFIC logical or technical risks found IN THE CONTENT. Provide title, description, riskScore (8.9/10), and action.
-            6. Mission Protocol: Provide 3 granular, technical Primary Objectives and 3 extremely specific Mission Abort items (red lines).
+            5. Vulnerability Alerts: Identify 3 HIGHLY SPECIFIC logical or technical risks found IN THE CONTENT. Provide title, description, riskScore (e.g., 8.9/10), and action. 
+               IF HAS_SPECIMENS is false, one vulnerability MUST be a "DATA_GAP" warning recommending the upload of datasets or sample specimens for higher empirical validity.
+            6. Mission Protocol: Provide 3 granular, technical Primary Objectives and 3 extremely specific Mission Abort items (out-of-scope).
             7. Operational Status: Phase (0-4).
 
             Return JSON: { 
@@ -236,7 +238,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                 "scopeFocus": string[],
                 "scopeAbort": string[],
                 "currentPhase": number,
-                "summary": "2-sentence technical summary of findings"
+                "summary": "2-sentence technical summary of findings. IF specimens are missing, include a polite technical recommendation to upload data for a full diagnostic."
             }
         `;
 
@@ -333,51 +335,86 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                     <div className="w-1 h-1 rounded-full bg-indigo-500/40" />
                 </div>
             </div>
-
-            {/* Chat Stream */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
+            {/* Consultation Content Area */}
+            <div className="flex-1 flex flex-col overflow-hidden">
                 {activeProject ? (
                     <>
-                    {messages.map((msg, index) => (
-                        <motion.div 
-                            key={msg.id}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className={`space-y-2 ${msg.role === 'user' ? 'flex flex-col items-end' : ''}`}
-                        >
-                            {msg.role === 'ai' && (
-                                <div className="flex items-center gap-2 text-indigo-400 text-xs font-bold uppercase tracking-wide">
-                                    <ShieldAlert className="w-3 h-3" />
-                                    {index === 0 ? "Initial Analysis" : "AI Mentor"}
-                                </div>
-                            )}
-                            
-                            <div className={`
-                                p-4 text-sm leading-relaxed max-w-[95%] shadow-sm
-                                ${msg.role === 'ai' 
-                                    ? 'bg-slate-900 border border-white/10 rounded-xl rounded-tl-none text-slate-300' 
-                                    : 'bg-slate-800 border border-white/5 rounded-xl rounded-tr-none text-slate-200'
-                                }
-                            `}>
-                                {msg.role === 'ai' ? (
-                                    <span dangerouslySetInnerHTML={{ 
-                                        __html: msg.text.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>').replace(/\*(.*?)\*/g, '<em class="text-slate-400">$1</em>').replace(/\n/g, '<br/>')
-                                    }} />
-                                ) : msg.text}
+                    {/* Welcome / Initial Analysis - Fixed at top if present */}
+                    {messages.length > 0 && (
+                        <div className="p-4 border-b border-white/5 bg-slate-900/20">
+                            <div className="flex items-center gap-2 text-indigo-400 text-[10px] font-bold uppercase tracking-wider mb-2">
+                                <ShieldAlert className="w-3 h-3" />
+                                Initial Analysis
                             </div>
-                        </motion.div>
-                    ))}
-
-                    {isTyping && (
-                        <motion.div 
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="flex items-center gap-2 text-slate-500 text-xs pl-2"
-                        >
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                            AI is thinking...
-                        </motion.div>
+                            <div className="bg-slate-900 border border-white/10 rounded-xl p-4 text-xs leading-relaxed text-slate-300 shadow-sm">
+                                <span dangerouslySetInnerHTML={{ 
+                                    __html: messages[0].text.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>').replace(/\*(.*?)\*/g, '<em class="text-slate-400">$1</em>').replace(/\n/g, '<br/>')
+                                }} />
+                            </div>
+                        </div>
                     )}
+
+                    {/* Chat Input Area - Repositioned after Initial Analysis */}
+                    <div className="p-4 border-b border-white/5 bg-slate-950/50">
+                        <form className="relative" onSubmit={handleSendMessage}>
+                            <input 
+                                type="text" 
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                placeholder="Request Deep Analysis..."
+                                disabled={!activeProject}
+                                className="w-full bg-slate-900/50 border border-white/10 rounded-xl pl-4 pr-12 py-3 text-sm text-slate-300 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all font-mono"
+                            />
+                            <button type="submit" className="absolute right-3 top-2.5 p-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-lg text-indigo-500 transition-colors">
+                                <ArrowRight className="w-4 h-4" />
+                            </button>
+                        </form>
+                    </div>
+
+                    {/* Chat Stream - Rest of messages */}
+                    <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
+                        {messages.slice(1).map((msg, index) => (
+                            <motion.div 
+                                key={msg.id}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className={`space-y-2 ${msg.role === 'user' ? 'flex flex-col items-end' : ''}`}
+                            >
+                                {msg.role === 'ai' && (
+                                    <div className="flex items-center gap-2 text-indigo-400 text-xs font-bold uppercase tracking-wide">
+                                        <ShieldAlert className="w-3 h-3" />
+                                        AI Mentor
+                                    </div>
+                                )}
+                                
+                                <div className={`
+                                    p-4 text-sm leading-relaxed max-w-[95%] shadow-sm
+                                    ${msg.role === 'ai' 
+                                        ? 'bg-slate-900 border border-white/10 rounded-xl rounded-tl-none text-slate-300' 
+                                        : 'bg-slate-800 border border-white/5 rounded-xl rounded-tr-none text-slate-200'
+                                    }
+                                `}>
+                                    {msg.role === 'ai' ? (
+                                        <span dangerouslySetInnerHTML={{ 
+                                            __html: msg.text.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>').replace(/\*(.*?)\*/g, '<em class="text-slate-400">$1</em>').replace(/\n/g, '<br/>')
+                                        }} />
+                                    ) : msg.text}
+                                </div>
+                            </motion.div>
+                        ))}
+
+                        {isTyping && (
+                            <motion.div 
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="flex items-center gap-2 text-slate-500 text-xs pl-2"
+                            >
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                                AI is thinking...
+                            </motion.div>
+                        )}
+                        <div ref={messagesEndRef} />
+                    </div>
                     </>
                 ) : (
                     <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-500">
@@ -386,25 +423,8 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                         <button onClick={() => onNavigate('dashboard')} className="mt-4 text-indigo-400 hover:text-indigo-300 text-sm">Return to Dashboard</button>
                     </div>
                 )}
-                <div ref={messagesEndRef} />
             </div>
 
-            {/* Input Area */}
-            <div className="p-6 border-t border-white/5 bg-slate-950">
-                <form className="relative" onSubmit={handleSendMessage}>
-                    <input 
-                        type="text" 
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        placeholder="Request Deep Analysis..."
-                        disabled={!activeProject}
-                        className="w-full bg-slate-900/50 border border-white/10 rounded-xl pl-4 pr-12 py-3.5 text-sm text-slate-300 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all font-mono"
-                    />
-                    <button type="submit" className="absolute right-3 top-3 p-2 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-lg text-indigo-500 transition-colors">
-                        <ArrowRight className="w-4 h-4" />
-                    </button>
-                </form>
-            </div>
         </div>
 
         {/* Right Panel: Scrollable Diagnostic HUD */}
@@ -463,7 +483,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                                         initial={{ pathLength: 0 }}
                                         animate={{ pathLength: metrics.confidence / 100 }}
                                         transition={{ duration: 1.5, ease: "easeOut" }}
-                                        cx="50" cy="50" r="45" fill="none" stroke={metrics.confidence > 50 ? "#10b981" : "#f43f5e"} strokeWidth="8" strokeLinecap="round" className="drop-shadow-[0_0_10px_rgba(244,63,94,0.5)]"
+                                        cx="50" cy="50" r="45" fill="none" stroke={metrics.confidence > 50 ? "#10b981" : "#6366f1"} strokeWidth="8" strokeLinecap="round" className="drop-shadow-[0_0_10px_rgba(99,102,241,0.5)]"
                                      />
                                  </svg>
                                  <div className="absolute text-center">
@@ -493,7 +513,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                                 status="critical" 
                              />
                              
-                             <div className="h-1 w-12 bg-rose-500 rounded-full mt-4" />
+                             <div className="h-1 w-12 bg-indigo-500 rounded-full mt-4" />
                          </div>
 
                           <div className="relative flex items-center justify-center">
@@ -505,8 +525,8 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                                      initial={{ scale: 0 }}
                                      animate={{ scale: activeProject ? 1 : 0 }}
                                      points={getRadarPoints(metrics.radar || "50,50,50,50,50")} 
-                                     fill="rgba(244, 63, 94, 0.2)" 
-                                     stroke="#f43f5e" 
+                                     fill="rgba(99, 102, 241, 0.2)" 
+                                     stroke="#6366f1" 
                                      strokeWidth="2" 
                                      className="transition-all duration-1000"
                                   />
@@ -519,7 +539,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                 {/* Vulnerability Alerts & Recommendations */}
                 <div className="pt-8">
                      <h3 className="flex items-center gap-2 text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-6">
-                        <div className="w-1 h-1 bg-rose-500 rounded-full" />
+                        <div className="w-1 h-1 bg-indigo-500 rounded-full" />
                         Vulnerability Alerts & Recommendations
                      </h3>
                      
@@ -640,8 +660,8 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                                          >
                                              <div className="text-sm font-mono text-indigo-500/30 mt-1 font-bold">E{i}</div>
                                              <div>
-                                                <p className="text-base text-slate-400 font-bold mb-1 line-through decoration-indigo-500/40 opacity-70 group-hover/item:opacity-100 transition-opacity uppercase tracking-tight">{item.split(':')[0]}</p>
-                                                <p className="text-xs text-indigo-500/50 leading-relaxed font-mono italic">
+                                                <p className="text-base text-slate-200 font-bold mb-1 group-hover/item:text-indigo-400 transition-colors uppercase tracking-tight">{item.split(':')[0]}</p>
+                                                <p className="text-xs text-slate-400 leading-relaxed font-mono italic">
                                                     {item.split(':')[1] || "Operational exclusion required to prevent research dead-ends."}
                                                 </p>
                                              </div>
@@ -655,7 +675,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
 
                 {/* Research Operational Timeline (Vertical Roadmap) */}
                 <div className="pt-24 pb-32 border-t border-white/5 mt-20 relative">
-                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-px bg-gradient-to-r from-transparent via-rose-500/50 to-transparent" />
+                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent" />
                      
                      <div className="mb-16 text-center">
                         <h3 className="text-[10px] font-mono text-slate-500 uppercase tracking-[0.6em] font-black mb-4">Operational Roadmap</h3>
@@ -736,14 +756,14 @@ const VulnerabilityCard = ({ type, title, desc, riskScore, action }: any) => {
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             className={`p-5 rounded-2xl border transition-all hover:bg-white/[0.02] ${
-                isCritical ? 'bg-rose-500/[0.03] border-rose-500/20' : 
+                isCritical ? 'bg-indigo-500/[0.03] border-indigo-500/20' : 
                 isModerate ? 'bg-amber-500/[0.03] border-amber-500/20' : 
                 'bg-cyan-500/[0.03] border-cyan-500/20'
             }`}
         >
             <div className="flex justify-between items-start mb-4">
                 <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
-                    isCritical ? 'bg-rose-500/20 text-rose-400' : 
+                    isCritical ? 'bg-indigo-500/20 text-indigo-400' : 
                     isModerate ? 'bg-amber-500/20 text-amber-400' : 
                     'bg-cyan-500/20 text-cyan-400'
                 }`}>
@@ -762,7 +782,7 @@ const VulnerabilityCard = ({ type, title, desc, riskScore, action }: any) => {
                     <span className="text-[8px] text-slate-500 uppercase font-mono">Risk: {riskScore}</span>
                 </div>
                 <button className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${
-                    isCritical ? 'text-rose-400 hover:text-rose-300' : 
+                    isCritical ? 'text-indigo-400 hover:text-indigo-300' : 
                     isModerate ? 'text-amber-400 hover:text-amber-300' : 
                     'text-cyan-400 hover:text-cyan-300'
                 }`}>
@@ -783,20 +803,20 @@ const RoadmapStep = ({ phase, title, desc, isActive, isRight, isWarning }: any) 
         >
             {/* Connection Node */}
             <div className={`absolute left-[5.5px] md:left-1/2 md:-translate-x-1/2 w-4 h-4 rounded-full border-2 bg-slate-950 transition-all duration-1000 z-10 ${
-                isActive ? 'border-rose-500 shadow-[0_0_20px_rgba(244,63,94,0.8)] scale-125' : 
+                isActive ? 'border-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.8)] scale-125' : 
                 'border-white/10'
             }`}>
-                 {isActive && <div className="absolute inset-0 rounded-full bg-rose-500/20 animate-ping" />}
+                 {isActive && <div className="absolute inset-0 rounded-full bg-indigo-500/20 animate-ping" />}
             </div>
             
             {/* Content Card */}
             <div className={`w-full md:w-[45%] pl-10 md:pl-0 ${isRight ? 'md:pr-16 md:text-right' : 'md:pl-16'}`}>
                 <div className={`p-8 rounded-[2rem] bg-slate-900/40 border transition-all duration-500 group ${
                     isActive 
-                    ? 'border-rose-500/30 bg-slate-900/80 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.5)]' 
+                    ? 'border-indigo-500/30 bg-slate-900/80 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.5)]' 
                     : 'border-white/5 hover:border-white/10'
                 }`}>
-                    <div className={`text-[10px] font-mono font-black tracking-[0.3em] mb-3 ${isActive ? 'text-rose-500' : 'text-slate-600'}`}>
+                    <div className={`text-[10px] font-mono font-black tracking-[0.3em] mb-3 ${isActive ? 'text-indigo-500' : 'text-slate-600'}`}>
                         PROTOCOL PHASE_0{phase}
                     </div>
                     <h4 className={`text-xl font-black mb-3 tracking-tight ${isActive ? 'text-white' : 'text-slate-500'}`}>{title}</h4>
@@ -807,11 +827,11 @@ const RoadmapStep = ({ phase, title, desc, isActive, isRight, isWarning }: any) 
                     {isActive && (
                         <div className={`mt-6 flex items-center gap-3 ${isRight ? 'justify-end' : ''}`}>
                             <div className="flex gap-1.5">
-                                <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-                                <span className="w-2 h-2 rounded-full bg-rose-500/40" />
-                                <span className="w-2 h-2 rounded-full bg-rose-500/10" />
+                                <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                                <span className="w-2 h-2 rounded-full bg-indigo-500/40" />
+                                <span className="w-2 h-2 rounded-full bg-indigo-500/10" />
                             </div>
-                            <span className="text-[10px] font-mono text-rose-500 font-bold uppercase tracking-widest">Active Link</span>
+                            <span className="text-[10px] font-mono text-indigo-500 font-bold uppercase tracking-widest">Active Link</span>
                         </div>
                     )}
                 </div>
@@ -828,7 +848,7 @@ const MetricRow = ({ label, value, status }: { label: string, value: string, sta
     const colors = {
         success: 'text-cyan-400',
         warning: 'text-amber-400',
-        critical: 'text-rose-500'
+        critical: 'text-indigo-500'
     };
     const icons = {
         success: CheckCircle2,
@@ -852,7 +872,7 @@ const FlowStep = ({ label, status }: { label: string, status: 'success' | 'warni
     const styles = {
         success: { bg: 'bg-slate-900', border: 'border-cyan-500', icon: CheckCircle2, color: 'text-cyan-500' },
         warning: { bg: 'bg-slate-900', border: 'border-amber-500', icon: AlertTriangle, color: 'text-amber-500' },
-        critical: { bg: 'bg-slate-900', border: 'border-rose-500', icon: XCircle, color: 'text-rose-500' },
+        critical: { bg: 'bg-slate-900', border: 'border-indigo-500', icon: XCircle, color: 'text-indigo-500' },
         locked: { bg: 'bg-slate-950', border: 'border-slate-800', icon: null, color: 'text-slate-600' }
     };
     const style = styles[status];
