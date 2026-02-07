@@ -13,11 +13,13 @@ import {
   AlertTriangle,
   XCircle,
   Loader2,
-  ChevronRight
+  ChevronRight,
+  Shield,
+  Target
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../AppContext';
-import { GoogleGenAI } from "@google/genai";
+import { callAI } from '../lib/ai';
 import { ProfileDropdown } from './ProfileDropdown';
 
 interface AnalysisPageProps {
@@ -34,9 +36,11 @@ interface Message {
 export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
+  const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { getActiveProject, updateProject, user } = useApp();
+  const { getActiveProject, updateProject, user, addLog } = useApp();
   const activeProject = getActiveProject();
 
   const scrollToBottom = () => {
@@ -70,7 +74,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
 
   const handleSendMessage = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!input.trim() || !activeProject) return;
+    if (!input.trim() || !activeProject || isTyping) return;
 
     const newMessage: Message = {
         id: Date.now().toString(),
@@ -89,78 +93,186 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
     });
 
     try {
-        const storedKey = localStorage.getItem('ae_api_key');
-        const apiKey = storedKey || process.env.API_KEY;
-        
-        if (!apiKey) {
-            throw new Error("Missing API Key. Please configure it in Settings.");
-        }
-
-        const ai = new GoogleGenAI({ apiKey });
         const systemPrompt = `You are an advanced academic research validator AI named "Assertion Engine". 
         Your goal is to stress-test the user's research hypothesis. 
         Current Project Title: ${activeProject.title}
         Current Hypothesis: ${activeProject.hypothesis}
         Assumptions: ${activeProject.assumptions.join(', ')}
         
+        ${activeProject.fullContent ? `DOCUMENT CONTEXT:
+        ${activeProject.fullContent.slice(0, 10000)}` : ''}
+
         Be rigorous, slightly critical but constructive. Focus on identifying logical fallacies, data gaps, and novelty issues. Use markdown for formatting.`;
 
-        const storedModel = localStorage.getItem('ae_api_model') || 'gemini-1.5-flash';
-            
-        const response = await ai.models.generateContent({
-            model: storedModel,
-            contents: [
-                { role: 'user', parts: [{ text: systemPrompt }] }, 
-                ...newMessages.filter(m => m.id !== 'init').map(m => ({
-                    role: m.role === 'ai' ? 'model' : 'user',
-                    parts: [{ text: m.text }]
-                }))
-            ],
-            config: {
-                temperature: 0.7,
-            }
+        const aiResponseText = await callAI(systemPrompt, newMessages.filter(m => m.id !== 'init'), {
+            temperature: 0.7
         });
-
-        const aiResponseText = response.text || "Analysis complete. No specific anomalies found.";
         
         const aiMessage: Message = {
             id: (Date.now() + 1).toString(),
             role: 'ai',
-            text: aiResponseText,
+            text: aiResponseText || "Analysis complete. No specific anomalies found.",
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         };
 
         const updatedMessages = [...newMessages, aiMessage];
         setMessages(updatedMessages);
         
-        // Also simulate updating metrics based on conversation depth (simplified simulation)
-        if (updatedMessages.length > 3) {
-             const newMetrics = {
-                 ...activeProject.metrics,
-                 logicConsistency: Math.min(0.98, activeProject.metrics.logicConsistency + 0.05),
-                 confidence: Math.min(99, activeProject.metrics.confidence + 5)
-             };
-             updateProject(activeProject.id, { 
+        const extractMetricsPrompt = `
+            Based on the following research conversation and the document context, update the research metrics. 
+            Analyze for:
+            1. Logic Consistency (0.0 to 1.0)
+            2. Data Lineage (0.0 to 1.0)
+            3. Novelty Index (0.0 to 1.0)
+            
+            Return ONLY RAW JSON: { "logicConsistency": number, "dataLineage": number, "noveltyIndex": number }
+            
+            Conversation so far:
+            ${updatedMessages.slice(-4).map(m => `${m.role}: ${m.text}`).join('\n')}
+        `;
+
+        try {
+            const metricsResult = await callAI(extractMetricsPrompt, [], { responseMimeType: 'application/json' });
+            const cleanedMetrics = metricsResult.replace(/```json/g, '').replace(/```/g, '').trim();
+            const newMetricsData = JSON.parse(cleanedMetrics);
+            
+            const finalMetrics = {
+                ...activeProject.metrics,
+                logicConsistency: newMetricsData.logicConsistency ?? activeProject.metrics.logicConsistency,
+                dataLineage: newMetricsData.dataLineage ?? activeProject.metrics.dataLineage,
+                noveltyIndex: newMetricsData.noveltyIndex ?? activeProject.metrics.noveltyIndex,
+                confidence: Math.min(99, activeProject.metrics.confidence + 2)
+            };
+
+            updateProject(activeProject.id, { 
                 analysisChat: updatedMessages.map(m => ({ role: m.role, text: m.text, timestamp: m.timestamp })),
-                metrics: newMetrics
+                metrics: finalMetrics
             });
-        } else {
-             updateProject(activeProject.id, { 
+        } catch (e) {
+            console.warn("Metrics update failed:", e);
+            updateProject(activeProject.id, { 
                 analysisChat: updatedMessages.map(m => ({ role: m.role, text: m.text, timestamp: m.timestamp }))
             });
         }
 
-    } catch (error) {
-        console.error("Gemini API Error:", error);
+    } catch (error: any) {
+        console.error("AI API Error:", error);
+
+        let errorText = "Connection to Neural Core interrupted. Please verify API configuration.";
+        const msg = (error.message || error.toString()).toLowerCase();
+        
+        if (msg.includes('429')) {
+            errorText = "Quota limit reached. Please wait a moment or switch providers in Settings.";
+        } else if (msg.includes('401') || msg.includes('403') || msg.includes('key')) {
+            errorText = "Authentication failed. Please check your API key in Settings.";
+        } else if (msg) {
+            errorText = `Error: ${msg.slice(0, 100)}`;
+        }
+
         const errorMessage: Message = {
             id: (Date.now() + 1).toString(),
             role: 'ai',
-            text: "Connection to Neural Core interrupted. Please verify API configuration.",
+            text: errorText,
             timestamp: new Date().toLocaleTimeString()
         };
         setMessages(prev => [...prev, errorMessage]);
     } finally {
         setIsTyping(false);
+    }
+  };
+
+  const handleDeepScan = async () => {
+    if (!activeProject || isScanning) return;
+
+    // Context Awareness Check: Ensure we have enough data to scan
+    const hasContent = activeProject.fullContent && activeProject.fullContent.length > 200;
+    const hasSpecimens = activeProject.specimens && activeProject.specimens.length > 0;
+
+    if (!hasContent && !hasSpecimens) {
+        addLog({ module: 'Analysis', event: 'Deep Scan inhibited: Insufficient context.', status: 'warning' });
+        
+        // Only add error if it's not already the last message to prevent spam
+        const lastMsg = messages[messages.length - 1];
+        if (lastMsg?.text.includes("I cannot perform a deep diagnostic yet")) return;
+
+        setMessages(prev => [...prev, {
+            id: Date.now().toString(),
+            role: 'ai',
+            text: `I cannot perform a deep diagnostic yet. My logic engine requires project context: please upload research documents in "**New Project**" or add datasets to the "**Specimen Lab**".`,
+            timestamp: new Date().toLocaleTimeString()
+        }]);
+        return;
+    }
+
+    setIsScanning(true);
+    addLog({ module: 'Analysis', event: 'Initializing Deep Diagnostic Scan...', status: 'info' });
+
+    try {
+        const scanPrompt = `
+            You are the Lead Diagnostic Engine. Perform a deep technical and logical diagnostic on this research project.
+            DO NOT PROVIDE GENERIC FEEDBACK. Use the provided PROJECT CONTENT as the absolute source of truth.
+
+            PROJECT TITLE: ${activeProject.title}
+            HYPOTHESIS: ${activeProject.hypothesis}
+            ASSUMPTIONS: ${activeProject.assumptions.join(', ')}
+            CONTENT: ${activeProject.fullContent?.slice(0, 10000) || 'See Specimens'}
+            SPECIMEN COUNT: ${activeProject.specimens?.length || 0}
+
+            TASK:
+            1. Logic Consistency (0-100): How cohesive is the argument?
+            2. Data Lineage (0-100): How well do the specimens support the hypothesis?
+            3. Novelty Index (0-100): How unique is this compared to standard literature?
+            4. Radar Map: 5 technical coordinates (0-100) specifically for this research topic.
+            5. Vulnerability Alerts: Identify 3 HIGHLY SPECIFIC logical or technical risks found IN THE CONTENT. Provide title, description, riskScore (8.9/10), and action.
+            6. Mission Protocol: Provide 3 granular, technical Primary Objectives and 3 extremely specific Mission Abort items (red lines).
+            7. Operational Status: Phase (0-4).
+
+            Return JSON: { 
+                "logic": number, 
+                "lineage": number, 
+                "novelty": number, 
+                "radar": [number, number, number, number, number],
+                "vulnerabilities": [...],
+                "scopeFocus": string[],
+                "scopeAbort": string[],
+                "currentPhase": number,
+                "summary": "2-sentence technical summary of findings"
+            }
+        `;
+
+        const result = await callAI(scanPrompt, [], { responseMimeType: 'application/json' });
+        const data = JSON.parse(result);
+
+        updateProject(activeProject.id, {
+            metrics: {
+                ...activeProject.metrics,
+                logicConsistency: data.logic / 100,
+                dataLineage: data.lineage / 100,
+                noveltyIndex: data.novelty / 100,
+                confidence: Math.round((data.logic + data.lineage + data.novelty) / 3),
+                radar: data.radar ? data.radar.join(',') : metrics.radar
+            },
+            vulnerabilities: data.vulnerabilities || [],
+            scopeFocus: data.scopeFocus || [],
+            scopeAbort: data.scopeAbort || [],
+            progress: data.currentPhase !== undefined ? (data.currentPhase + 1) * 20 : activeProject.progress
+        });
+
+        addLog({ module: 'Analysis', event: 'Deep Scan Complete.', status: 'success' });
+        
+        const aiMsg: Message = {
+            id: Date.now().toString(),
+            role: 'ai',
+            text: data.summary || `Deep Scan Complete. Diagnostic metrics updated based on your project content.`,
+            timestamp: new Date().toLocaleTimeString()
+        };
+        setMessages(prev => [...prev, aiMsg]);
+
+    } catch (e) {
+        console.error(e);
+        addLog({ module: 'Analysis', event: 'Deep Scan Failed.', status: 'error' });
+    } finally {
+        setIsScanning(false);
     }
   };
 
@@ -186,6 +298,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
             
             <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-500">
                 <button onClick={() => onNavigate('dashboard')} className="hover:text-white transition-colors">Dashboard</button>
+                <button onClick={() => onNavigate('specimens')} className="hover:text-white transition-colors">Dataset</button>
                 <button onClick={() => onNavigate('library')} className="hover:text-white transition-colors">Library</button>
                 <button className="text-white">Analysis</button>
                 <button onClick={() => onNavigate('novelty')} className="hover:text-white transition-colors">Novelty</button>
@@ -193,30 +306,36 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
             </nav>
         </div>
 
-        <div className="flex items-center gap-3 md:gap-4">
-            <div className="flex items-center gap-2 px-3 py-1 bg-rose-500/10 border border-rose-500/20 rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-                <span className="text-[10px] font-bold text-rose-500 uppercase tracking-wide hidden sm:inline-block">Vulnerability Scanner Active</span>
+            <div className="flex items-center gap-3 md:gap-4">
+                <button 
+                    onClick={handleDeepScan}
+                    disabled={isScanning}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all ${
+                        isScanning 
+                        ? 'bg-rose-500/20 border-rose-500/50 text-rose-300' 
+                        : 'bg-rose-500/10 border-rose-500/30 text-rose-500 hover:bg-rose-500/20'
+                    }`}
+                >
+                    <Activity className={`w-3.5 h-3.5 ${isScanning ? 'animate-spin' : ''}`} />
+                    {isScanning ? 'Scanning...' : 'Run Diagnostic Scan'}
+                </button>
+                <ProfileDropdown onNavigate={onNavigate} />
             </div>
-            <ProfileDropdown onNavigate={onNavigate} />
-        </div>
       </header>
 
-      <main className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-        
-        {/* Left Panel: The Chat Interface */}
-        <div className="w-full lg:w-96 h-[45vh] lg:h-auto border-b lg:border-b-0 lg:border-r border-white/5 bg-slate-950/50 flex flex-col z-10">
-            {/* Toolbar */}
-            <div className="h-14 border-b border-white/5 flex items-center justify-between px-4">
-                <div className="flex gap-2">
-                    <button className="text-[10px] font-bold text-slate-300 bg-white/5 px-3 py-1.5 rounded border border-white/5 hover:bg-white/10 transition-colors">
-                        MENTOR MODE
-                    </button>
+      <main className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+        {/* Left Panel: Fixed Sidebar Chat HUD */}
+        <div className="hidden lg:flex w-[400px] flex-col border-r border-white/5 bg-slate-950/80 backdrop-blur-xl z-20">
+            <div className="p-4 border-b border-white/5 flex items-center justify-between bg-slate-900/40">
+                <span className="text-[10px] font-bold text-rose-500 uppercase tracking-[0.2em]">Consultation Engine</span>
+                <div className="flex gap-1.5">
+                    <div className="w-1 h-1 rounded-full bg-rose-500 animate-pulse" />
+                    <div className="w-1 h-1 rounded-full bg-rose-500/40" />
                 </div>
             </div>
 
             {/* Chat Stream */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+            <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
                 {activeProject ? (
                     <>
                     {messages.map((msg, index) => (
@@ -271,35 +390,33 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
             </div>
 
             {/* Input Area */}
-            <div className="p-4 border-t border-white/5 bg-slate-950">
+            <div className="p-6 border-t border-white/5 bg-slate-950">
                 <form className="relative" onSubmit={handleSendMessage}>
-                    <button type="button" className="absolute left-3 top-3 text-slate-500 hover:text-white transition-colors">
-                        <Plus className="w-4 h-4" />
-                    </button>
                     <input 
                         type="text" 
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
-                        placeholder={activeProject ? "Request analysis..." : "Create a project first..."}
+                        placeholder="Request Deep Analysis..."
                         disabled={!activeProject}
-                        className="w-full bg-slate-900/50 border border-white/10 rounded-lg pl-10 pr-12 py-3 text-sm text-slate-300 focus:outline-none focus:border-rose-500/50 transition-all font-mono disabled:opacity-50"
+                        className="w-full bg-slate-900/50 border border-white/10 rounded-xl pl-4 pr-12 py-3.5 text-sm text-slate-300 focus:outline-none focus:border-rose-500/50 focus:ring-1 focus:ring-rose-500/20 transition-all font-mono"
                     />
-                    <button type="submit" disabled={!activeProject || !input.trim()} className="absolute right-2 top-2 p-1.5 bg-rose-500 hover:bg-rose-400 rounded-md text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    <button type="submit" className="absolute right-3 top-3 p-2 bg-rose-500/10 hover:bg-rose-500/20 rounded-lg text-rose-500 transition-colors">
                         <ArrowRight className="w-4 h-4" />
                     </button>
                 </form>
             </div>
         </div>
 
-        {/* Right Panel: HUD - Takes remaining space */}
-        <div className="flex-1 bg-slate-950 p-6 lg:p-10 overflow-y-auto relative h-[55vh] lg:h-auto">
-             {/* Background Grid */}
-             <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
+        {/* Right Panel: Scrollable Diagnostic HUD */}
+        <div className="flex-1 overflow-y-auto bg-slate-950/20 custom-scrollbar relative">
+             <div className="relative p-6 lg:p-12 max-w-6xl mx-auto space-y-12">
+                 {/* Background Grid */}
+                 <div className="absolute inset-0 bg-[linear-gradient(rgba(244,63,94,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(244,63,94,0.02)_1px,transparent_1px)] bg-[size:50px_50px] pointer-events-none" />
 
              <div className="relative z-10 max-w-5xl mx-auto space-y-8">
                 
                 {/* Breadcrumb */}
-                <nav className="flex items-center text-sm font-medium text-slate-500">
+                <nav className="flex items-center text-sm font-medium text-slate-500 relative z-20">
                     <button onClick={() => onNavigate('dashboard')} className="hover:text-white transition-colors">Dashboard</button>
                     <ChevronRight className="w-4 h-4 mx-2 text-slate-700" />
                     <button onClick={() => onNavigate('new-project')} className="hover:text-white transition-colors">Project</button>
@@ -379,47 +496,330 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                              <div className="h-1 w-12 bg-rose-500 rounded-full mt-4" />
                          </div>
 
-                         <div className="relative flex items-center justify-center">
-                             {/* Mock Radar Chart */}
-                             <svg viewBox="0 0 100 100" className="w-full h-full max-w-[140px] md:max-w-[180px]">
-                                 <polygon points="50,10 90,40 80,90 20,90 10,40" fill="none" stroke="#334155" strokeWidth="1" />
-                                 <polygon points="50,25 75,45 70,80 30,80 25,45" fill="none" stroke="#334155" strokeWidth="1" />
-                                 <motion.polygon 
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: activeProject ? 1 : 0 }}
-                                    points="50,15 85,42 60,85 35,60 25,42" fill="rgba(244, 63, 94, 0.2)" stroke="#f43f5e" strokeWidth="2" 
-                                 />
-                             </svg>
-                             <div className="absolute -bottom-2 text-[8px] font-mono text-slate-600 uppercase tracking-wider">Multivariate Logic Map</div>
-                         </div>
+                          <div className="relative flex items-center justify-center">
+                              {/* Dynamic Radar Chart */}
+                              <svg viewBox="0 0 100 100" className="w-full h-full max-w-[140px] md:max-w-[180px]">
+                                  <polygon points="50,10 88,38 74,82 26,82 12,38" fill="none" stroke="#334155" strokeWidth="1" opacity="0.5" />
+                                  <polygon points="50,30 69,44 62,66 38,66 31,44" fill="none" stroke="#334155" strokeWidth="1" opacity="0.3" />
+                                  <motion.polygon 
+                                     initial={{ scale: 0 }}
+                                     animate={{ scale: activeProject ? 1 : 0 }}
+                                     points={getRadarPoints(metrics.radar || "50,50,50,50,50")} 
+                                     fill="rgba(244, 63, 94, 0.2)" 
+                                     stroke="#f43f5e" 
+                                     strokeWidth="2" 
+                                     className="transition-all duration-1000"
+                                  />
+                              </svg>
+                              <div className="absolute -bottom-2 text-[8px] font-mono text-slate-600 uppercase tracking-wider">Multivariate Logic Map</div>
+                          </div>
                     </div>
                 </div>
 
-                {/* Bottom Logic Flow */}
-                <div className="border-t border-white/5 pt-8">
+                {/* Vulnerability Alerts & Recommendations */}
+                <div className="pt-8">
                      <h3 className="flex items-center gap-2 text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-6">
-                        <LayoutGrid className="w-3 h-3" />
-                        Methodology Logic Flow
+                        <div className="w-1 h-1 bg-rose-500 rounded-full" />
+                        Vulnerability Alerts & Recommendations
                      </h3>
                      
-                     <div className="relative overflow-x-auto pb-4">
-                         {/* Line - Hidden on small mobile if scrolling */}
-                         <div className="absolute top-1/2 left-0 w-full h-px bg-white/5 -z-10 min-w-[600px]" />
+                     <div className="grid md:grid-cols-3 gap-6">
+                        {activeProject?.vulnerabilities && activeProject.vulnerabilities.length > 0 ? (
+                            activeProject.vulnerabilities.map((v, i) => (
+                                <VulnerabilityCard 
+                                    key={i}
+                                    type={v.type}
+                                    title={v.title}
+                                    desc={v.desc}
+                                    riskScore={v.riskScore}
+                                    action={v.action}
+                                />
+                            ))
+                        ) : (
+                            <>
+                                <VulnerabilityCard 
+                                    type="CRITICAL" 
+                                    title="Data Availability" 
+                                    desc="Proposed dataset relies on restricted genomic repositories requiring authenticated API credentials." 
+                                    riskScore="8.9/10"
+                                    action="RESOLVE"
+                                />
+                                <VulnerabilityCard 
+                                    type="MODERATE" 
+                                    title="Compute Cost" 
+                                    desc="Inference cost for multi-agent simulation exceeds current budget allocations by 12.5%." 
+                                    riskScore="5.2/10"
+                                    action="OPTIMIZE"
+                                />
+                                <VulnerabilityCard 
+                                    type="SUGGESTION" 
+                                    title="Pivot Recommendation" 
+                                    desc="Apply to Zero-Shot Learning or incorporate Graph Transformers for better results." 
+                                    riskScore="NOVELTY SLIP"
+                                    action="SELECT"
+                                />
+                            </>
+                        )}
+                     </div>
+                </div>
+
+                {/* Mission Protocol Section */}
+                <div className="pt-12">
+                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
+                        <div>
+                            <h3 className="flex items-center gap-3 text-xs md:text-sm font-mono text-rose-500 uppercase tracking-[0.4em] font-black mb-2">
+                                <Target className="w-4 h-4" />
+                                Mission Protocol
+                            </h3>
+                            <p className="text-sm text-slate-400 font-medium max-w-xl">Strategic objectives and operational guardrails derived from multimodal diagnostic analysis.</p>
+                        </div>
+                        <div className="flex items-center gap-6 text-[10px] font-mono text-slate-500 uppercase bg-slate-900/40 border border-white/5 py-2 px-5 rounded-full backdrop-blur-sm self-start md:self-center">
+                            <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" /> Sector: Research Delta</span>
+                            <div className="w-px h-4 bg-white/10" />
+                            <span>Security: Level 5</span>
+                        </div>
+                     </div>
+                     
+                     <div className="grid lg:grid-cols-2 gap-8">
+                         {/* Primary Directives (In Scope) */}
+                         <div className="glass-card p-1 rounded-3xl bg-emerald-500/5 border border-emerald-500/10 overflow-hidden group hover:border-emerald-500/30 transition-all duration-500">
+                             <div className="p-8 space-y-8 bg-slate-950/40 rounded-[22px] h-full">
+                                 <div className="flex items-center gap-6">
+                                    <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shadow-lg shadow-emerald-500/10">
+                                        <CheckCircle2 className="w-7 h-7 text-emerald-400" />
+                                    </div>
+                                    <div>
+                                        <div className="text-[10px] text-emerald-500 font-bold uppercase tracking-[0.2em] mb-1">Status: Active</div>
+                                        <div className="text-xl font-black text-white tracking-tight">Primary Directives</div>
+                                    </div>
+                                 </div>
+
+                                 <div className="space-y-6">
+                                     {(activeProject?.scopeFocus && activeProject.scopeFocus.length > 0 ? activeProject.scopeFocus : ["Coherent Logic over Grammar", "SOTA Multimodal Verification", "Sub-60s Inconsistent Search"]).map((item, i) => (
+                                         <motion.div 
+                                            key={i} 
+                                            initial={{ opacity: 0, x: -20 }}
+                                            whileInView={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: i * 0.1 }}
+                                            className="flex gap-6 group/item"
+                                         >
+                                             <div className="text-sm font-mono text-emerald-500/30 mt-1 font-bold">0{i+1}</div>
+                                             <div>
+                                                <p className="text-base text-slate-100 font-bold mb-1 group-hover/item:text-emerald-400 transition-colors uppercase tracking-tight">{item.split(':')[0]}</p>
+                                                <p className="text-xs text-slate-500 leading-relaxed font-medium">
+                                                    {item.split(':')[1] || "High-priority technical objective validated by diagnostic engine."}
+                                                </p>
+                                             </div>
+                                         </motion.div>
+                                     ))}
+                                 </div>
+                             </div>
+                         </div>
                          
-                         <div className="flex justify-between text-center min-w-[600px]">
-                             <FlowStep label="Hypothesis" status={activeProject ? "success" : "locked"} />
-                             <FlowStep label="Sample Group" status={activeProject?.specimens.length ? "warning" : "locked"} />
-                             <FlowStep label="Induction" status="critical" />
-                             <FlowStep label="Conclusion" status="locked" />
+                         {/* Mission Abort (Out of Scope) */}
+                         <div className="glass-card p-1 rounded-3xl bg-rose-500/5 border border-rose-500/10 overflow-hidden group hover:border-rose-500/30 transition-all duration-500">
+                             <div className="p-8 space-y-8 bg-slate-950/40 rounded-[22px] h-full">
+                                 <div className="flex items-center gap-6">
+                                    <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center shadow-lg shadow-rose-500/10">
+                                        <XCircle className="w-7 h-7 text-rose-500" />
+                                    </div>
+                                    <div>
+                                        <div className="text-[10px] text-rose-500 font-bold uppercase tracking-[0.2em] mb-1">Status: Restricted</div>
+                                        <div className="text-xl font-black text-white tracking-tight">Mission Abort Zone</div>
+                                    </div>
+                                 </div>
+
+                                 <div className="space-y-6">
+                                     {(activeProject?.scopeAbort && activeProject.scopeAbort.length > 0 ? activeProject.scopeAbort : ["Generic Database Ops", "Implicit Absolute Truths", "Linear LLM Wrapper Patterns"]).map((item, i) => (
+                                         <motion.div 
+                                            key={i}
+                                            initial={{ opacity: 0, x: 20 }}
+                                            whileInView={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: i * 0.1 }}
+                                            className="flex gap-6 group/item"
+                                         >
+                                             <div className="text-sm font-mono text-rose-500/30 mt-1 font-bold">E{i}</div>
+                                             <div>
+                                                <p className="text-base text-slate-400 font-bold mb-1 line-through decoration-rose-500/40 opacity-70 group-hover/item:opacity-100 transition-opacity uppercase tracking-tight">{item.split(':')[0]}</p>
+                                                <p className="text-xs text-rose-500/50 leading-relaxed font-mono italic">
+                                                    {item.split(':')[1] || "Operational exclusion required to prevent research dead-ends."}
+                                                </p>
+                                             </div>
+                                         </motion.div>
+                                     ))}
+                                 </div>
+                             </div>
                          </div>
                      </div>
                 </div>
 
-             </div>
+                {/* Research Operational Timeline (Vertical Roadmap) */}
+                <div className="pt-24 pb-32 border-t border-white/5 mt-20 relative">
+                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-px bg-gradient-to-r from-transparent via-rose-500/50 to-transparent" />
+                     
+                     <div className="mb-16 text-center">
+                        <h3 className="text-[10px] font-mono text-slate-500 uppercase tracking-[0.6em] font-black mb-4">Operational Roadmap</h3>
+                        <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tight">Synapse to Syntax Protocol</h2>
+                        <div className="w-12 h-1 bg-rose-500 mx-auto mt-6 rounded-full" />
+                     </div>
+                     
+                     <div className="max-w-4xl mx-auto relative px-4 md:px-0">
+                         {/* Centered Vertical Line */}
+                         <div className="absolute left-6 md:left-1/2 md:-translate-x-1/2 top-0 h-full w-px bg-slate-800 shadow-[0_0_15px_rgba(244,63,94,0.1)]" />
+                         
+                         <div className="space-y-16">
+                             <RoadmapStep 
+                                phase={0} 
+                                title="Genesis Assertion" 
+                                desc="Atomic extraction of the research kernel. Defining logical parameters and foundational constraints." 
+                                isActive={true} 
+                             />
+                             <RoadmapStep 
+                                phase={1} 
+                                title="Specimen Ingestion" 
+                                desc="Hydrating the hypothesis with high-fidelity datasets. Verification of signal-to-noise ratios." 
+                                isRight={true}
+                                isActive={activeProject?.progress ? activeProject.progress >= 20 : false}
+                             />
+                             <RoadmapStep 
+                                phase={2} 
+                                title="Collision Search" 
+                                desc="SOTA technical intersection check. Identifying logical overlaps and existing research threats." 
+                                isActive={activeProject?.progress ? activeProject.progress >= 40 : false}
+                             />
+                             <RoadmapStep 
+                                phase={3} 
+                                title="Diagnostic HUD" 
+                                desc="Deep logic consistency scan and multi-layered vulnerability assessment." 
+                                isRight={true}
+                                isActive={activeProject?.progress ? activeProject.progress >= 60 : false}
+                             />
+                             <RoadmapStep 
+                                phase={4} 
+                                title="Final Synthesis" 
+                                desc="Formal report generation and operational handover of verified assertion data." 
+                                isWarning={activeProject?.progress ? activeProject.progress >= 80 : false}
+                                isActive={activeProject?.progress ? activeProject.progress >= 80 : false}
+                             />
+                         </div>
+                     </div>
+                </div>
+
+            </div>
         </div>
+    </div>
       </main>
     </div>
   );
+};
+
+const getRadarPoints = (radarString: string) => {
+    const vals = radarString.split(',').map(v => parseInt(v) || 0);
+    if (vals.length < 5) return "50,50 50,50 50,50 50,50 50,50";
+    
+    // Calculate points based on 5 vertices of a pentagon
+    const p1 = `50,${50 - (40 * vals[0] / 100)}`;
+    const p2 = `${50 + (38 * vals[1] / 100)},${50 - (12 * vals[1] / 100)}`;
+    const p3 = `${50 + (24 * vals[2] / 100)},${50 + (32 * vals[2] / 100)}`;
+    const p4 = `${50 - (24 * vals[3] / 100)},${50 + (32 * vals[3] / 100)}`;
+    const p5 = `${50 - (38 * vals[4] / 100)},${50 - (12 * vals[4] / 100)}`;
+    
+    return `${p1} ${p2} ${p3} ${p4} ${p5}`;
+};
+
+const VulnerabilityCard = ({ type, title, desc, riskScore, action }: any) => {
+    const isCritical = type === 'CRITICAL';
+    const isModerate = type === 'MODERATE';
+    
+    return (
+        <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            className={`p-5 rounded-2xl border transition-all hover:bg-white/[0.02] ${
+                isCritical ? 'bg-rose-500/[0.03] border-rose-500/20' : 
+                isModerate ? 'bg-amber-500/[0.03] border-amber-500/20' : 
+                'bg-cyan-500/[0.03] border-cyan-500/20'
+            }`}
+        >
+            <div className="flex justify-between items-start mb-4">
+                <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
+                    isCritical ? 'bg-rose-500/20 text-rose-400' : 
+                    isModerate ? 'bg-amber-500/20 text-amber-400' : 
+                    'bg-cyan-500/20 text-cyan-400'
+                }`}>
+                    {type}
+                </span>
+                {isCritical ? <Database className="w-3.5 h-3.5 text-slate-600" /> : isModerate ? <Activity className="w-3.5 h-3.5 text-slate-600" /> : <Shield className="w-3.5 h-3.5 text-slate-600" />}
+            </div>
+            
+            <h4 className="text-white font-bold text-sm mb-2 uppercase tracking-wide">{title}</h4>
+            <p className="text-slate-400 text-xs leading-relaxed mb-6 line-clamp-3 font-mono">
+                {desc}
+            </p>
+            
+            <div className="flex justify-between items-center mt-auto pt-4 border-t border-white/5">
+                <div className="flex flex-col">
+                    <span className="text-[8px] text-slate-500 uppercase font-mono">Risk: {riskScore}</span>
+                </div>
+                <button className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${
+                    isCritical ? 'text-rose-400 hover:text-rose-300' : 
+                    isModerate ? 'text-amber-400 hover:text-amber-300' : 
+                    'text-cyan-400 hover:text-cyan-300'
+                }`}>
+                    {action}
+                </button>
+            </div>
+        </motion.div>
+    );
+};
+
+const RoadmapStep = ({ phase, title, desc, isActive, isRight, isWarning }: any) => {
+    return (
+        <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className={`relative flex items-center w-full ${isRight ? 'md:flex-row-reverse' : ''}`}
+        >
+            {/* Connection Node */}
+            <div className={`absolute left-[5.5px] md:left-1/2 md:-translate-x-1/2 w-4 h-4 rounded-full border-2 bg-slate-950 transition-all duration-1000 z-10 ${
+                isActive ? 'border-rose-500 shadow-[0_0_20px_rgba(244,63,94,0.8)] scale-125' : 
+                'border-white/10'
+            }`}>
+                 {isActive && <div className="absolute inset-0 rounded-full bg-rose-500/20 animate-ping" />}
+            </div>
+            
+            {/* Content Card */}
+            <div className={`w-full md:w-[45%] pl-10 md:pl-0 ${isRight ? 'md:pr-16 md:text-right' : 'md:pl-16'}`}>
+                <div className={`p-8 rounded-[2rem] bg-slate-900/40 border transition-all duration-500 group ${
+                    isActive 
+                    ? 'border-rose-500/30 bg-slate-900/80 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.5)]' 
+                    : 'border-white/5 hover:border-white/10'
+                }`}>
+                    <div className={`text-[10px] font-mono font-black tracking-[0.3em] mb-3 ${isActive ? 'text-rose-500' : 'text-slate-600'}`}>
+                        PROTOCOL PHASE_0{phase}
+                    </div>
+                    <h4 className={`text-xl font-black mb-3 tracking-tight ${isActive ? 'text-white' : 'text-slate-500'}`}>{title}</h4>
+                    <p className={`text-sm leading-relaxed transition-colors font-medium ${isActive ? 'text-slate-300' : 'text-slate-600'}`}>
+                        {desc}
+                    </p>
+                    
+                    {isActive && (
+                        <div className={`mt-6 flex items-center gap-3 ${isRight ? 'justify-end' : ''}`}>
+                            <div className="flex gap-1.5">
+                                <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                                <span className="w-2 h-2 rounded-full bg-rose-500/40" />
+                                <span className="w-2 h-2 rounded-full bg-rose-500/10" />
+                            </div>
+                            <span className="text-[10px] font-mono text-rose-500 font-bold uppercase tracking-widest">Active Link</span>
+                        </div>
+                    )}
+                </div>
+            </div>
+            
+            <div className="hidden md:block w-px md:flex-1" />
+        </motion.div>
+    );
 };
 
 // --- Sub-components ---
