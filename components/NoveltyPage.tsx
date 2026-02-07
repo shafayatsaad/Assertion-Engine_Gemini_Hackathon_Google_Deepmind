@@ -30,6 +30,7 @@ export const NoveltyPage: React.FC<NoveltyPageProps> = ({ onNavigate }) => {
   const [isScanning, setIsScanning] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [useDocumentContext, setUseDocumentContext] = useState(true);
 
   const handleScan = async () => {
       if (!activeProject || isScanning) return;
@@ -38,37 +39,44 @@ export const NoveltyPage: React.FC<NoveltyPageProps> = ({ onNavigate }) => {
       addLog({ module: 'Novelty', event: `Started literature scan for ${activeProject.title}`, status: 'info' });
 
       try {
+        const docContent = useDocumentContext ? (activeProject.fullContent?.slice(0, 8000) || '') : '';
         const systemPrompt = `
-             You are a rigorous academic novelty engine. Your task is to analyze the user's research hypothesis and generate 3 "conflicting" or "related" academic papers that might challenge the novelty of their work.
+            You are a rigorous academic novelty engine. Your task is to analyze the user's research hypothesis ${useDocumentContext ? 'AND FULL DOCUMENT CONTENT' : ''} to find "conflicting" or "related" academic papers.
             
             Current Hypothesis: "${activeProject.hypothesis}"
             Assumptions: ${activeProject.assumptions.join(', ')}
-            Content: ${activeProject.fullContent?.slice(0, 3000) || 'No full content provided.'}
+            Content (User's Uploaded Paper): ${docContent || 'No full content used.'}
             ${searchTerm ? `Specific Focus / Keywords: "${searchTerm}"` : ''}
 
-            IMPORTANT: Perform a DEEP comparison. Do not just look at abstracts. 
+            CRITICAL INSTRUCTION: 
+            - Do NOT flag high similarity just because the TOPIC is the same (e.g. "Cancer Detection"). 
+            - ONLY flag high similarity (>70%) if the METHODOLOGY, ARCHITECTURE, and DATASET are identical.
+            - If the user's paper uses a different approach (e.g. Transformers vs CNN) but for the same problem, similarity should be LOW (<40%) but listed as a "Competitor".
+            - Highlight the "Key Differentiator" of the user's paper.
+
             Identify specific:
             1. MODEL ARCHITECTURES: e.g., Transformer variations, CNN layers, Loss functions.
             2. DATASETS: e.g., ImageNet, SQuAD, or custom clinical datasets.
-            3. BENCHMARKS/RESULTS: Precision/Recall, Accuracy, F1 scores compared to the user's goals.
+            3. BENCHMARKS/RESULTS: Precision/Recall, Accuracy, F1 scores.
 
             Return a RAW JSON object with a 'papers' array and a 'pivots' array. 
             Each paper should have:
             - id: string
             - title: string
-            - similarity: number (0 to 100)
-            - status: "critical" | "warning" | "safe"
+            - similarity: number (0 to 100) - BE STRICT. 
+            - status: "critical" (Identical Method) | "warning" (Similar Method) | "safe" (Different Method, Same Topic)
             - abstract: string
             - architecture: string (SPECIFIC architectural overlap/difference)
             - dataset: string (SPECIFIC dataset overlap/difference)
             - results: string (SPECIFIC metric comparison)
+            - differentiator: string (Why the user's paper is different/better)
             
             Each pivot should have:
             - type: "DOMAIN PIVOT" | "METHOD PIVOT" | "CONSTRAINT PIVOT"
             - desc: string (specific actionable advice to bypass this collision)
             - impact: "high" | "medium" | "low"
             
-            The papers should sound like real SOTA (State of the Art) research.
+            The papers should be REAL State-of-the-Art research if possible, or highly realistic synthetic examples if internet is restricted.
         `;
 
         const resultText = await callAI(systemPrompt, [], {
@@ -154,12 +162,9 @@ export const NoveltyPage: React.FC<NoveltyPageProps> = ({ onNavigate }) => {
       <main className="flex-1 max-w-7xl mx-auto w-full px-6 py-12 space-y-12">
         
         {/* Breadcrumb */}
+        {/* Breadcrumb */}
         <nav className="flex items-center text-sm font-medium text-slate-500 mb-6">
             <button onClick={() => onNavigate('dashboard')} className="hover:text-white transition-colors">Dashboard</button>
-            <ChevronRight className="w-4 h-4 mx-2 text-slate-700" />
-            <button onClick={() => onNavigate('new-project')} className="hover:text-white transition-colors">Project</button>
-            <ChevronRight className="w-4 h-4 mx-2 text-slate-700" />
-            <button onClick={() => onNavigate('analysis')} className="hover:text-white transition-colors">Analysis</button>
             <ChevronRight className="w-4 h-4 mx-2 text-slate-700" />
             <span className="text-cyan-400">Novelty</span>
         </nav>
@@ -192,6 +197,14 @@ export const NoveltyPage: React.FC<NoveltyPageProps> = ({ onNavigate }) => {
                         disabled={!activeProject}
                         className="w-full bg-slate-900/50 border border-white/10 rounded-lg pl-12 pr-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-all placeholder:text-slate-600 disabled:opacity-50"
                     />
+                    {activeProject?.fullContent && (
+                         <button 
+                            onClick={() => setUseDocumentContext(!useDocumentContext)}
+                            className={`absolute right-3 top-2.5 px-3 py-1 rounded text-[10px] font-medium border transition-all ${useDocumentContext ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-slate-300'}`}
+                         >
+                            {useDocumentContext ? 'Analzying Full Doc' : 'Ignore Full Doc'}
+                         </button>
+                    )}
                 </div>
                 <button 
                     onClick={handleScan}
@@ -315,6 +328,12 @@ export const NoveltyPage: React.FC<NoveltyPageProps> = ({ onNavigate }) => {
 
                             {/* Deep Comparison Metrics */}
                             <div className="mt-auto space-y-4 pt-4 border-t border-white/5">
+                                {currentPaper.differentiator && (
+                                    <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                                        <div className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider mb-1">Key Differentiator</div>
+                                        <p className="text-xs text-slate-300 leading-relaxed font-medium">"{currentPaper.differentiator}"</p>
+                                    </div>
+                                )}
                                 {currentPaper.architecture && (
                                     <div className="space-y-1">
                                         <div className="text-[10px] text-rose-400 font-bold uppercase tracking-wider">Architecture Collision</div>
