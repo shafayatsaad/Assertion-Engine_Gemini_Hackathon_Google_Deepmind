@@ -21,6 +21,23 @@ export interface Paper {
   image: string;
   status: 'critical' | 'warning' | 'safe';
   abstract: string;
+  architecture?: string;
+  dataset?: string;
+  results?: string;
+}
+
+export interface Pivot {
+  type: string;
+  desc: string;
+  impact: 'high' | 'medium' | 'low';
+}
+
+export interface Vulnerability {
+  type: 'CRITICAL' | 'MODERATE' | 'SUGGESTION';
+  title: string;
+  desc: string;
+  riskScore: string;
+  action: string;
 }
 
 export interface Specimen {
@@ -31,6 +48,22 @@ export interface Specimen {
   riskLevel: 'info' | 'warning' | 'critical';
   riskText: string;
   suitability: number;
+  predictionData?: number[];
+  featureWeights?: FeatureWeight[];
+  samplePurityGrid?: SamplePurity[];
+  surgeonInsight?: string;
+}
+
+export interface FeatureWeight {
+    name: string;
+    weight: number;
+    type: 'signal' | 'noise' | 'toxic';
+    enabled: boolean;
+}
+
+export interface SamplePurity {
+    id: string;
+    quality: 'elite' | 'radioactive' | 'bias';
 }
 
 export interface ProjectMetrics {
@@ -53,10 +86,14 @@ export interface Project {
   logs: Log[];
   analysisChat?: { role: 'ai' | 'user', text: string, timestamp: string }[];
   
-  // Dynamic Data Fields
   metrics: ProjectMetrics;
   specimens: Specimen[];
   noveltyPapers: Paper[];
+  pivots?: Pivot[];
+  vulnerabilities?: Vulnerability[];
+  fullContent?: string;
+  scopeFocus?: string[];
+  scopeAbort?: string[];
 }
 
 export interface Log {
@@ -83,9 +120,11 @@ interface AppContextType {
   createProject: (data: Partial<Project>) => Promise<string>;
   setActiveProject: (id: string) => void;
   updateProject: (id: string, data: Partial<Project>) => Promise<void>;
+  deleteProject: (id: string) => Promise<void>;
   getActiveProject: () => Project | undefined;
   // System Functions
   addLog: (log: Omit<Log, 'id' | 'time'>) => void;
+  clearLogs: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -258,30 +297,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.log('📊 Projects data:', { count: data?.length || 0 });
       
       // Transform Supabase data to app format
-      const transformedProjects: Project[] = (data || []).map((p: any) => ({
-        id: p.id,
-        title: p.title,
-        hypothesis: p.hypothesis,
-        assumptions: p.assumptions || [],
-        status: p.status as 'ANALYZING' | 'COMPLETE' | 'FLAGGED' | 'ARCHIVED',
-        progress: p.progress || 0,
-        updated: p.updated_at,
-        logs: [],
-        analysisChat: [],
-        metrics: {
-          confidence: p.confidence || 0,
-          samples: 0,
-          computeTime: "0h 0m",
-          logicConsistency: p.logic_consistency || 0,
-          dataLineage: p.data_lineage || 0,
-          noveltyIndex: p.novelty_index || 0
-        },
-        specimens: [],
-        noveltyPapers: []
-      }));
+      const transformedProjects: Project[] = (data || []).map((p: any) => {
+        // Hydrate from localStorage for fields potentially missing in Supabase schema
+        const localDataRaw = localStorage.getItem(`ae_project_ext_${p.id}`);
+        const localData = localDataRaw ? JSON.parse(localDataRaw) : {};
+
+        return {
+          id: p.id,
+          title: p.title,
+          hypothesis: p.hypothesis,
+          assumptions: p.assumptions || [],
+          status: p.status as 'ANALYZING' | 'COMPLETE' | 'FLAGGED' | 'ARCHIVED',
+          progress: p.progress || 0,
+          updated: p.updated_at,
+          logs: [],
+          analysisChat: localData.analysisChat || [],
+          metrics: {
+            confidence: p.confidence || 0,
+            samples: localData.metrics?.samples || 0,
+            computeTime: localData.metrics?.computeTime || "0h 0m",
+            logicConsistency: p.logic_consistency || 0,
+            dataLineage: p.data_lineage || 0,
+            noveltyIndex: p.novelty_index || 0,
+            radar: p.radar || localData.metrics?.radar || "50,50,50,50,50"
+          },
+          vulnerabilities: p.vulnerabilities || localData.vulnerabilities || [],
+          scopeFocus: p.scope_focus || localData.scopeFocus || [],
+          scopeAbort: p.scope_abort || localData.scopeAbort || [],
+          fullContent: p.full_content || localData.fullContent || "",
+          specimens: localData.specimens || [],
+          noveltyPapers: localData.noveltyPapers || []
+        };
+      });
       
       setProjects(transformedProjects);
-      console.log('✅ Projects loaded successfully');
+      console.log('✅ Projects loaded & hydrated from LocalStorage mirror where applicable');
     } catch (error) {
       console.error('❌ Error loading projects:', error);
       // Don't throw - allow login to succeed even if projects fail to load
@@ -659,6 +709,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       
       setProjects(prev => [transformedProject, ...prev]);
       setActiveProjectId(newProject.id);
+      
+      // Initialize localStorage mirror
+      localStorage.setItem(`ae_project_ext_${newProject.id}`, JSON.stringify(transformedProject));
+      
       addLog({ module: 'System', event: `New Project Created: ${newProject.title}`, status: 'info' });
       
       return newProject.id;
@@ -670,6 +724,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateProject = async (id: string, data: Partial<Project>) => {
     try {
+      // 1. Try to update Supabase for supported fields
       const { error } = await supabase
         .from('projects')
         .update({
@@ -685,14 +740,50 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         })
         .eq('id', id);
       
-      if (error) throw error;
+      // If error (e.g. schema mismatch), we log but continue with local mirror
+      if (error) {
+          console.warn('⚠️ Supabase update had issues (possibly schema restricted):', error);
+      }
       
-      // Update local state
-      setProjects(prev => prev.map(p => 
-        p.id === id ? { ...p, ...data, updated: new Date().toISOString() } : p
-      ));
+      // 2. Update local state
+      let updatedProject: Project | undefined;
+      setProjects(prev => {
+        const next = prev.map(p => {
+          if (p.id === id) {
+              updatedProject = { ...p, ...data, updated: new Date().toISOString() };
+              return updatedProject;
+          }
+          return p;
+        });
+        
+        // 3. Mirror the FULL project data to localStorage as a safety net
+        if (updatedProject) {
+            localStorage.setItem(`ae_project_ext_${id}`, JSON.stringify(updatedProject));
+        }
+        
+        return next;
+      });
+      
     } catch (error) {
       console.error('Update project error:', error);
+      throw error;
+    }
+  };
+
+  const deleteProject = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      setProjects(prev => prev.filter(p => p.id !== id));
+      if (activeProjectId === id) setActiveProjectId(null);
+      addLog({ module: 'System', event: `Project Deleted`, status: 'warning' });
+    } catch (error) {
+      console.error('Delete project error:', error);
       throw error;
     }
   };
@@ -714,6 +805,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setLogs(prev => [newLog, ...prev].slice(0, 100)); 
   };
 
+  const clearLogs = () => {
+    setLogs([]);
+  };
+
   return (
     <AppContext.Provider value={{ 
       user, 
@@ -728,7 +823,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createProject, 
       setActiveProject, 
       updateProject,
+      deleteProject,
       addLog,
+      clearLogs,
       getActiveProject
     }}>
       {children}
