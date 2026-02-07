@@ -22,6 +22,7 @@ interface NewProjectWizardProps {
 }
 
 export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }) => {
+  const [title, setTitle] = useState('');
   const [assumptions, setAssumptions] = useState([
     'Closed System', 'Infinite Compute', 'Static Dataset'
   ]);
@@ -52,6 +53,7 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
         // Mock extracted data based on file name or random
         setHypothesis(`Extracted from ${file.name}: Novel approach to validated consistency in distributed ledger systems using asynchronous consensus mechanisms.`);
         setAssumptions(['Asynchronous Network', 'Byzantine Fault Tolerance', 'Scalable Nodes', 'Low Latency']);
+        if (!title) setTitle(file.name.split('.')[0]); // Auto-title from filename if empty
         setIsUploading(false);
     }, 2500);
   };
@@ -61,7 +63,7 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
    */
   const handleCreate = () => {
     createProject({
-      title: "New Research Initiative " + new Date().toLocaleDateString(),
+      title: title || "New Research Initiative " + new Date().toLocaleDateString(),
       hypothesis: hypothesis,
       assumptions: assumptions,
       status: "ANALYZING",
