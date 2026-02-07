@@ -275,7 +275,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                 dataLineage: data.lineage / 100,
                 noveltyIndex: data.novelty / 100,
                 confidence: Math.round((data.logic + data.lineage + data.novelty) / 3),
-                radar: data.radar ? data.radar.join(',') : metrics.radar
+                radar: data.radar ? data.radar.join(',') : (activeProject.metrics?.radar || "50,50 50,50 50,50 50,50 50,50")
             },
             vulnerabilities: data.vulnerabilities || [],
             scopeFocus: data.scopeFocus || [],
@@ -327,6 +327,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                 <button onClick={() => onNavigate('dashboard')} className="hover:text-white transition-colors">Dashboard</button>
                 <button onClick={() => onNavigate('specimens')} className="hover:text-white transition-colors">Dataset</button>
                 <button onClick={() => onNavigate('library')} className="hover:text-white transition-colors">Library</button>
+                <button onClick={() => onNavigate('novelty')} className="hover:text-white transition-colors">Novelty</button>
                 <button className="text-white">Analysis</button>
             </nav>
             <button 
@@ -783,7 +784,6 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
             </div>
         </div>
     </div>
-      {/* Vulnerability Modal */}
       {/* Modal Removed - Embedded in Card */}
 
       </main>
