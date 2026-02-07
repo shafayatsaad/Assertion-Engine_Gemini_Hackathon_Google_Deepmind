@@ -189,56 +189,49 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
     if (!activeProject || isScanning) return;
 
     // Context Awareness Check: Ensure we have enough data to scan
-    // Lowered threshold to 50 chars to allow shorter abstracts/proposals
+    // REMOVED BLOCKING LOGIC: We will scan whatever we have (Title + Hypothesis is enough for a basic check)
     const hasContent = activeProject.fullContent && activeProject.fullContent.length > 50;
     const hasSpecimens = activeProject.specimens && activeProject.specimens.length > 0;
 
-    // Allow scan with just content (paper-only mode) OR specimens
-    if (!hasContent && !hasSpecimens) {
-        addLog({ module: 'Analysis', event: `Deep Scan inhibited: Insufficient context. (Content len: ${activeProject.fullContent?.length || 0})`, status: 'warning' });
-
-
-        
-        // Only add error if it's not already the last message to prevent spam
-        const lastMsg = messages[messages.length - 1];
-        if (lastMsg?.text.includes("I cannot perform a deep diagnostic yet")) return;
-
-        setMessages(prev => [...prev, {
-            id: Date.now().toString(),
-            role: 'ai',
-            text: `I cannot perform a deep diagnostic yet. My logic engine requires project context: please upload research documents in "**New Project**" or add datasets to the "**Specimen Lab**".`,
-            timestamp: new Date().toLocaleTimeString()
-        }]);
-        return;
-    }
-
-    // Paper-only mode notification (informational, not blocking)
-    if (hasContent && !hasSpecimens) {
-        addLog({ module: 'Analysis', event: 'Running paper-only diagnostic (datasets recommended for full analysis)', status: 'info' });
+    // Paper-only mode notification (informational)
+    if (!hasSpecimens) {
+        // If content is also missing, this might be a very "thin" scan
+        if (!hasContent) {
+             addLog({ module: 'Analysis', event: 'Running minimal scan (Title/Hypothesis only)...', status: 'warning' });
+        } else {
+             addLog({ module: 'Analysis', event: 'Running paper-only diagnostic...', status: 'info' });
+        }
     }
 
     setIsScanning(true);
     addLog({ module: 'Analysis', event: 'Initializing Deep Diagnostic Scan...', status: 'info' });
 
     try {
+        const isPaperOnly = !activeProject.specimens || activeProject.specimens.length === 0;
+        const validContent = activeProject.fullContent || '';
+
+        // Construct the suggestion for the mentor message
+        const datasetSuggestion = isPaperOnly ? "\n\n**Suggestion:** For empirical validation of these claims, consider uploading a dataset (e.g., patient records, genomic sequences) to the Specimen Lab." : "";
+
         const scanPrompt = `
             You are the Lead Diagnostic Engine. Perform a deep technical and logical diagnostic on this research project.
             DO NOT PROVIDE GENERIC FEEDBACK. Use the provided PROJECT CONTENT as the absolute source of truth.
 
+            CONTEXT: ${isPaperOnly ? 'PHASE 1: THEORETICAL VALIDATION (Paper-Only). Focus on methodology coherence, hypothesis logic, and literature novelty. Do NOT block analysis due to missing data.' : 'PHASE 2: EMPIRICAL VALIDATION (Full Spectrum). Analyze consistency between hypothesis and provided specimens.'}
+
             PROJECT TITLE: ${activeProject.title}
             HYPOTHESIS: ${activeProject.hypothesis}
             ASSUMPTIONS: ${activeProject.assumptions.join(', ')}
-            CONTENT: ${activeProject.fullContent?.slice(0, 10000) || 'See Specimens'}
-            SPECIMEN COUNT: ${activeProject.specimens?.length || 0}
-            HAS_SPECIMENS: ${activeProject.specimens && activeProject.specimens.length > 0}
+            CONTENT: ${validContent.slice(0, 15000)}
+            HAS_SPECIMENS: ${!isPaperOnly}
 
             TASK:
             1. Logic Consistency (0-100): How cohesive is the argument?
-            2. Data Lineage (0-100): How well do the specimens support the hypothesis?
+            2. Data Lineage (0-100): ${isPaperOnly ? 'Evaluate the METHODOLOGICAL RIGOR of the proposed data strategy. If no data plan is mentioned, score low (20-40). If a solid plan exists, score higher (50-80). Do not return 0.' : 'How well do the specimens support the hypothesis?'}
             3. Novelty Index (0-100): How unique is this compared to standard literature?
             4. Radar Map: 5 technical coordinates (0-100) specifically for this research topic.
-            5. Vulnerability Alerts: Identify 3 HIGHLY SPECIFIC logical or technical risks found IN THE CONTENT. Provide title, description, riskScore (e.g., 8.9/10), and action. 
-               IF HAS_SPECIMENS is false, one vulnerability MUST be a "DATA_GAP" warning recommending the upload of datasets or sample specimens for higher empirical validity.
+            5. Vulnerability Alerts: Identify 3 HIGHLY SPECIFIC logical or technical risks found IN THE CONTENT.
+               ${isPaperOnly ? 'Focus on METHODOLOGICAL GAPS. Provide actionable steps to validate the theory. Do NOT just say "upload data".' : 'Focus on data inconsistencies and threats.'}
             6. Mission Protocol: Provide 3 granular, technical Primary Objectives and 3 extremely specific Mission Abort items (out-of-scope).
             7. Operational Status: Phase (0-4).
 
@@ -251,7 +244,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                 "scopeFocus": string[],
                 "scopeAbort": string[],
                 "currentPhase": number,
-                "summary": "2-sentence technical summary of findings. IF specimens are missing, include a polite technical recommendation to upload data for a full diagnostic."
+                "summary": "2-sentence technical summary of findings. Focus on the validity of the research proposal."
             }
         `;
 
@@ -278,7 +271,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
         const aiMsg: Message = {
             id: Date.now().toString(),
             role: 'ai',
-            text: data.summary || `Deep Scan Complete. Diagnostic metrics updated based on your project content.`,
+            text: (data.summary || `Deep Scan Complete. Diagnostic metrics updated based on your project content.`) + datasetSuggestion,
             timestamp: new Date().toLocaleTimeString()
         };
         setMessages(prev => [...prev, aiMsg]);
@@ -617,29 +610,14 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                                 />
                             ))
                         ) : (
-                            <>
-                                <VulnerabilityCard 
-                                    type="CRITICAL" 
-                                    title="Data Availability" 
-                                    desc="Proposed dataset relies on restricted genomic repositories requiring authenticated API credentials." 
-                                    riskScore="8.9/10"
-                                    action="RESOLVE"
-                                />
-                                <VulnerabilityCard 
-                                    type="MODERATE" 
-                                    title="Compute Cost" 
-                                    desc="Inference cost for multi-agent simulation exceeds current budget allocations by 12.5%." 
-                                    riskScore="5.2/10"
-                                    action="OPTIMIZE"
-                                />
-                                <VulnerabilityCard 
-                                    type="SUGGESTION" 
-                                    title="Pivot Recommendation" 
-                                    desc="Apply to Zero-Shot Learning or incorporate Graph Transformers for better results." 
-                                    riskScore="NOVELTY SLIP"
-                                    action="SELECT"
-                                />
-                            </>
+                            /* Pending / Empty State */
+                            <div className="col-span-3 p-8 border border-dashed border-slate-800 rounded-2xl bg-slate-900/20 flex flex-col items-center justify-center text-center">
+                                <Activity className="w-8 h-8 text-slate-700 mb-3" />
+                                <h4 className="text-slate-500 font-bold text-sm uppercase tracking-wider">Awaiting Diagnostic Scan</h4>
+                                <p className="text-slate-600 text-xs mt-2 max-w-xs mx-auto">
+                                    Run a detailed analysis to generate vulnerability assessments and threat models.
+                                </p>
+                            </div>
                         )}
                      </div>
                 </div>
@@ -655,83 +633,91 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                             <p className="text-sm text-slate-400 font-medium max-w-xl">Strategic objectives and operational guardrails derived from multimodal diagnostic analysis.</p>
                         </div>
                         <div className="flex items-center gap-6 text-[10px] font-mono text-slate-500 uppercase bg-slate-900/40 border border-white/5 py-2 px-5 rounded-full backdrop-blur-sm self-start md:self-center">
-                            <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" /> Sector: Research Delta</span>
+                            <span className="flex items-center gap-2"><div className={`w-1.5 h-1.5 rounded-full ${activeProject?.scopeFocus?.length > 0 ? 'bg-indigo-500' : 'bg-slate-600'} animate-pulse`} /> Sector: Research Delta</span>
                             <div className="w-px h-4 bg-white/10" />
                             <span>Security: Level 5</span>
                         </div>
                      </div>
                      
-                     <div className="grid lg:grid-cols-2 gap-8">
-                         {/* Primary Directives (In Scope) */}
-                         <div className="glass-card p-1 rounded-3xl bg-emerald-500/5 border border-emerald-500/10 overflow-hidden group hover:border-emerald-500/30 transition-all duration-500">
-                             <div className="p-8 space-y-8 bg-slate-950/40 rounded-[22px] h-full">
-                                 <div className="flex items-center gap-6">
-                                    <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shadow-lg shadow-emerald-500/10">
-                                        <CheckCircle2 className="w-7 h-7 text-emerald-400" />
-                                    </div>
-                                    <div>
-                                        <div className="text-[10px] text-emerald-500 font-bold uppercase tracking-[0.2em] mb-1">Status: Active</div>
-                                        <div className="text-xl font-black text-white tracking-tight">Primary Directives</div>
-                                    </div>
-                                 </div>
+                     {activeProject?.scopeFocus && activeProject.scopeFocus.length > 0 ? (
+                         <div className="grid lg:grid-cols-2 gap-8">
+                             {/* Primary Directives (In Scope) */}
+                             <div className="glass-card p-1 rounded-3xl bg-emerald-500/5 border border-emerald-500/10 overflow-hidden group hover:border-emerald-500/30 transition-all duration-500">
+                                 <div className="p-8 space-y-8 bg-slate-950/40 rounded-[22px] h-full">
+                                     <div className="flex items-center gap-6">
+                                        <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shadow-lg shadow-emerald-500/10">
+                                            <CheckCircle2 className="w-7 h-7 text-emerald-400" />
+                                        </div>
+                                        <div>
+                                            <div className="text-[10px] text-emerald-500 font-bold uppercase tracking-[0.2em] mb-1">Status: Active</div>
+                                            <div className="text-xl font-black text-white tracking-tight">Primary Directives</div>
+                                        </div>
+                                     </div>
 
-                                 <div className="space-y-6">
-                                     {(activeProject?.scopeFocus && activeProject.scopeFocus.length > 0 ? activeProject.scopeFocus : ["Coherent Logic over Grammar", "SOTA Multimodal Verification", "Sub-60s Inconsistent Search"]).map((item, i) => (
-                                         <motion.div 
-                                            key={i} 
-                                            initial={{ opacity: 0, x: -20 }}
-                                            whileInView={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: i * 0.1 }}
-                                            className="flex gap-6 group/item"
-                                         >
-                                             <div className="text-sm font-mono text-emerald-500/30 mt-1 font-bold">0{i+1}</div>
-                                             <div>
-                                                <p className="text-base text-slate-100 font-bold mb-1 group-hover/item:text-emerald-400 transition-colors uppercase tracking-tight">{item.split(':')[0]}</p>
-                                                <p className="text-xs text-slate-500 leading-relaxed font-medium">
-                                                    {item.split(':')[1] || "High-priority technical objective validated by diagnostic engine."}
-                                                </p>
-                                             </div>
-                                         </motion.div>
-                                     ))}
+                                     <div className="space-y-6">
+                                         {activeProject.scopeFocus.map((item, i) => (
+                                             <motion.div 
+                                                key={i} 
+                                                initial={{ opacity: 0, x: -20 }}
+                                                whileInView={{ opacity: 1, x: 0 }}
+                                                transition={{ delay: i * 0.1 }}
+                                                className="flex gap-6 group/item"
+                                             >
+                                                 <div className="text-sm font-mono text-emerald-500/30 mt-1 font-bold">0{i+1}</div>
+                                                 <div>
+                                                    <p className="text-base text-slate-100 font-bold mb-1 group-hover/item:text-emerald-400 transition-colors uppercase tracking-tight">{item.split(':')[0]}</p>
+                                                    <p className="text-xs text-slate-500 leading-relaxed font-medium">
+                                                        {item.split(':')[1] || "High-priority technical objective validated by diagnostic engine."}
+                                                    </p>
+                                                 </div>
+                                             </motion.div>
+                                         ))}
+                                     </div>
+                                 </div>
+                             </div>
+                             
+                             {/* Mission Abort (Out of Scope) */}
+                             <div className="glass-card p-1 rounded-3xl bg-indigo-500/5 border border-indigo-500/10 overflow-hidden group hover:border-indigo-500/30 transition-all duration-500">
+                                 <div className="p-8 space-y-8 bg-slate-950/40 rounded-[22px] h-full">
+                                     <div className="flex items-center gap-6">
+                                        <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shadow-lg shadow-indigo-500/10">
+                                            <XCircle className="w-7 h-7 text-indigo-500" />
+                                        </div>
+                                        <div>
+                                            <div className="text-[10px] text-indigo-500 font-bold uppercase tracking-[0.2em] mb-1">Status: Restricted</div>
+                                            <div className="text-xl font-black text-white tracking-tight">Mission Abort Zone</div>
+                                        </div>
+                                     </div>
+
+                                     <div className="space-y-6">
+                                         {activeProject.scopeAbort.map((item, i) => (
+                                             <motion.div 
+                                                key={i}
+                                                initial={{ opacity: 0, x: 20 }}
+                                                whileInView={{ opacity: 1, x: 0 }}
+                                                transition={{ delay: i * 0.1 }}
+                                                className="flex gap-6 group/item"
+                                             >
+                                                 <div className="text-sm font-mono text-indigo-500/30 mt-1 font-bold">E{i}</div>
+                                                 <div>
+                                                    <p className="text-base text-slate-200 font-bold mb-1 group-hover/item:text-indigo-400 transition-colors uppercase tracking-tight">{item.split(':')[0]}</p>
+                                                    <p className="text-xs text-slate-400 leading-relaxed font-mono italic">
+                                                        {item.split(':')[1] || "Operational exclusion required to prevent research dead-ends."}
+                                                    </p>
+                                                 </div>
+                                             </motion.div>
+                                         ))}
+                                     </div>
                                  </div>
                              </div>
                          </div>
-                         
-                         {/* Mission Abort (Out of Scope) */}
-                         <div className="glass-card p-1 rounded-3xl bg-indigo-500/5 border border-indigo-500/10 overflow-hidden group hover:border-indigo-500/30 transition-all duration-500">
-                             <div className="p-8 space-y-8 bg-slate-950/40 rounded-[22px] h-full">
-                                 <div className="flex items-center gap-6">
-                                    <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shadow-lg shadow-indigo-500/10">
-                                        <XCircle className="w-7 h-7 text-indigo-500" />
-                                    </div>
-                                    <div>
-                                        <div className="text-[10px] text-indigo-500 font-bold uppercase tracking-[0.2em] mb-1">Status: Restricted</div>
-                                        <div className="text-xl font-black text-white tracking-tight">Mission Abort Zone</div>
-                                    </div>
-                                 </div>
-
-                                 <div className="space-y-6">
-                                     {(activeProject?.scopeAbort && activeProject.scopeAbort.length > 0 ? activeProject.scopeAbort : ["Generic Database Ops", "Implicit Absolute Truths", "Linear LLM Wrapper Patterns"]).map((item, i) => (
-                                         <motion.div 
-                                            key={i}
-                                            initial={{ opacity: 0, x: 20 }}
-                                            whileInView={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: i * 0.1 }}
-                                            className="flex gap-6 group/item"
-                                         >
-                                             <div className="text-sm font-mono text-indigo-500/30 mt-1 font-bold">E{i}</div>
-                                             <div>
-                                                <p className="text-base text-slate-200 font-bold mb-1 group-hover/item:text-indigo-400 transition-colors uppercase tracking-tight">{item.split(':')[0]}</p>
-                                                <p className="text-xs text-slate-400 leading-relaxed font-mono italic">
-                                                    {item.split(':')[1] || "Operational exclusion required to prevent research dead-ends."}
-                                                </p>
-                                             </div>
-                                         </motion.div>
-                                     ))}
-                                 </div>
-                             </div>
-                         </div>
-                     </div>
+                     ) : (
+                        <div className="w-full h-64 border border-dashed border-slate-800 rounded-3xl bg-slate-900/10 flex flex-col items-center justify-center text-center">
+                            <Target className="w-10 h-10 text-slate-700 mb-4 opacity-50" />
+                            <h4 className="text-slate-500 font-bold text-sm uppercase tracking-wider">Protocol Not Established</h4>
+                            <p className="text-slate-600 text-xs mt-2">Initialize diagnostic scan to generate mission parameters.</p>
+                        </div>
+                     )}
                 </div>
 
                 {/* Research Operational Timeline (Vertical Roadmap) */}
