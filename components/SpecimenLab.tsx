@@ -18,6 +18,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useApp, Specimen } from '../AppContext';
 import { callAI } from '../lib/ai';
 import { ProfileDropdown } from './ProfileDropdown';
+import { MobileNav } from './MobileNav';
+import { Menu } from 'lucide-react';
 
 interface SpecimenLabProps {
   onNavigate: (page: 'dashboard' | 'library' | 'new-project' | 'profile') => void;
@@ -26,6 +28,7 @@ interface SpecimenLabProps {
 export const SpecimenLab: React.FC<SpecimenLabProps> = ({ onNavigate }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadComplete, setUploadComplete] = useState(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const { addLog, getActiveProject, updateProject, user } = useApp();
   const activeProject = getActiveProject();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -162,13 +165,19 @@ export const SpecimenLab: React.FC<SpecimenLabProps> = ({ onNavigate }) => {
              <button onClick={() => onNavigate('dashboard')} className="hover:text-white transition-colors text-xs md:text-sm font-medium text-slate-500">
                 Exit<span className="hidden sm:inline"> Lab</span>
              </button>
-            <button 
-                onClick={() => onNavigate('profile')} 
-                className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
-            >
-              <Settings className="w-5 h-5" />
-            </button>
-            <ProfileDropdown onNavigate={onNavigate} />
+             <button 
+                 onClick={() => onNavigate('profile')} 
+                 className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors hidden sm:block"
+             >
+               <Settings className="w-5 h-5" />
+             </button>
+             <button 
+               onClick={() => setIsMobileNavOpen(true)}
+               className="p-2 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-white md:hidden"
+             >
+               <Menu className="w-5 h-5" />
+             </button>
+             <ProfileDropdown onNavigate={onNavigate} />
           </div>
         </div>
       </header>
@@ -376,6 +385,13 @@ export const SpecimenLab: React.FC<SpecimenLabProps> = ({ onNavigate }) => {
         </div>
 
       </main>
+
+      <MobileNav 
+        isOpen={isMobileNavOpen} 
+        onClose={() => setIsMobileNavOpen(false)} 
+        onNavigate={onNavigate}
+        currentPage="specimens"
+      />
     </div>
   );
 };
