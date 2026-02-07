@@ -16,7 +16,8 @@ import {
   ChevronRight,
   Shield,
   Target,
-  Maximize2
+  Maximize2,
+  Terminal
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../AppContext';
@@ -783,81 +784,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
         </div>
     </div>
       {/* Vulnerability Modal */}
-      <AnimatePresence>
-        {selectedVuln && (
-           <motion.div 
-             initial={{ opacity: 0 }}
-             animate={{ opacity: 1 }}
-             exit={{ opacity: 0 }}
-             onClick={() => setSelectedVuln(null)}
-             className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
-           >
-              <motion.div 
-                initial={{ scale: 0.9, y: 20 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.9, y: 20 }}
-                onClick={(e) => e.stopPropagation()}
-                className="bg-slate-900 border border-white/10 rounded-2xl max-w-2xl w-full p-8 shadow-2xl relative overflow-hidden"
-              >
-                  <div className="absolute top-0 right-0 p-4">
-                      <button onClick={() => setSelectedVuln(null)} className="text-slate-500 hover:text-white transition-colors">
-                          <XCircle className="w-6 h-6" />
-                      </button>
-                  </div>
-
-                  <div className="flex items-center gap-4 mb-6">
-                      <div className={`p-3 rounded-xl border ${
-                          selectedVuln.type === 'CRITICAL' ? 'bg-rose-500/20 border-rose-500/50 text-rose-500' :
-                          selectedVuln.type === 'MODERATE' ? 'bg-amber-500/20 border-amber-500/50 text-amber-500' :
-                          'bg-indigo-500/20 border-indigo-500/50 text-indigo-500'
-                      }`}>
-                          <ShieldAlert className="w-8 h-8" />
-                      </div>
-                      <div>
-                          <h4 className={`text-xs font-bold uppercase tracking-wider mb-1 ${
-                              selectedVuln.type === 'CRITICAL' ? 'text-rose-400' :
-                              selectedVuln.type === 'MODERATE' ? 'text-amber-400' :
-                              'text-indigo-400'
-                          }`}>{selectedVuln.type} ALERT</h4>
-                          <h2 className="text-2xl font-bold text-white">{selectedVuln.title}</h2>
-                      </div>
-                  </div>
-
-                  <div className="space-y-6">
-                      <div className="bg-white/5 rounded-xl p-6 border border-white/5">
-                          <h5 className="text-slate-400 text-xs uppercase tracking-wider font-bold mb-2">Description</h5>
-                          <p className="text-slate-300 leading-relaxed text-sm md:text-base">
-                              {selectedVuln.desc}
-                          </p>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                          <div className="bg-white/5 rounded-xl p-4 border border-white/5">
-                              <h5 className="text-slate-400 text-xs uppercase tracking-wider font-bold mb-1">Risk Score</h5>
-                              <p className="text-2xl font-mono font-bold text-white">{selectedVuln.riskScore}</p>
-                          </div>
-                          <div className="bg-white/5 rounded-xl p-4 border border-white/5">
-                              <h5 className="text-slate-400 text-xs uppercase tracking-wider font-bold mb-1">Recommended Action</h5>
-                              <div className="flex items-center gap-2">
-                                  <span className="text-emerald-400 font-bold">{selectedVuln.action}</span>
-                                  <ArrowRight className="w-4 h-4 text-emerald-500" />
-                              </div>
-                          </div>
-                      </div>
-                  </div>
-
-                  <div className="mt-8 flex justify-end">
-                      <button 
-                        onClick={() => setSelectedVuln(null)}
-                        className="px-6 py-3 bg-white text-slate-900 font-bold rounded-lg hover:bg-slate-200 transition-colors"
-                      >
-                          Acknowledge & Close
-                      </button>
-                  </div>
-              </motion.div>
-           </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Modal Removed - Embedded in Card */}
 
       </main>
 
