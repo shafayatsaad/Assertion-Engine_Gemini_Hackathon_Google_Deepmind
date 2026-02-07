@@ -18,7 +18,8 @@ import {
   Twitter,
   Facebook,
   Link,
-  FileText
+  FileText,
+  Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../AppContext';
@@ -32,7 +33,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isLogsOpen, setIsLogsOpen] = useState(false);
   
-  const { user, logs, projects, getActiveProject, setActiveProject } = useApp();
+  const { user, logs, projects, getActiveProject, setActiveProject, deleteProject, clearLogs, activeProjectId } = useApp();
   
   const activeProject = getActiveProject();
 
@@ -54,6 +55,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
               <NavLink label="Dashboard" active />
               <button onClick={() => onNavigate('library')} className="px-4 py-2 text-sm font-medium rounded-lg transition-colors text-slate-400 hover:text-white hover:bg-white/5">
                 Library
+              </button>
+              <button onClick={() => onNavigate('specimens')} className="px-4 py-2 text-sm font-medium rounded-lg transition-colors text-slate-400 hover:text-white hover:bg-white/5">
+                Dataset
               </button>
               <button onClick={() => onNavigate('settings')} className="px-3 py-2 text-sm font-medium text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-white/5">
                 Settings
@@ -130,6 +134,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                             >
                                 <Play className="w-4 h-4 fill-current" />
                                 Resume Research
+                            </button>
+                            <button 
+                                onClick={async () => {
+                                    if(confirm("Are you sure you want to delete this project?")) {
+                                        await deleteProject(activeProject.id);
+                                    }
+                                }}
+                                className="p-2 rounded-lg border border-rose-500/20 hover:bg-rose-500/10 text-rose-500 transition-colors"
+                                title="Delete Project"
+                            >
+                                <Trash2 className="w-4 h-4" />
                             </button>
                         </div>
                     </motion.div>
@@ -262,7 +277,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                              <tr key={p.id} className="hover:bg-white/[0.02] transition-colors group cursor-pointer" onClick={() => { setActiveProject(p.id); onNavigate('analysis'); }}>
                                 <td className="px-6 py-4 font-mono text-emerald-500 group-hover:underline">#{p.id}</td>
                                 <td className="px-6 py-4 text-white truncate max-w-[200px]">{p.title}</td>
-                                <td className="px-6 py-4"><Badge status={p.status === 'COMPLETED' ? 'success' : p.status === 'FAILED' ? 'error' : 'warning'} label={p.status} /></td>
+                                <td className="px-6 py-4">
+                                    <Badge 
+                                        status={activeProjectId !== p.id && p.status === 'ANALYZING' ? 'warning' : p.status === 'COMPLETED' ? 'success' : p.status === 'FAILED' ? 'error' : 'warning'} 
+                                        label={activeProjectId !== p.id && p.status === 'ANALYZING' ? 'PAUSED' : p.status} 
+                                    />
+                                </td>
                                 <td className="px-6 py-4 text-slate-500 text-right font-mono">{new Date(p.updated).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
                             </tr>
                         )) : (
@@ -280,7 +300,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       {/* Modals */}
       <AnimatePresence>
         {isShareOpen && <ShareModal onClose={() => setIsShareOpen(false)} />}
-        {isLogsOpen && <LogsModal onClose={() => setIsLogsOpen(false)} logs={logs} />}
+        {isLogsOpen && <LogsModal onClose={() => setIsLogsOpen(false)} logs={logs} clearLogs={clearLogs} />}
       </AnimatePresence>
 
     </div>
@@ -420,7 +440,7 @@ const ShareModal = ({ onClose }: { onClose: () => void }) => (
     </div>
 );
 
-const LogsModal = ({ onClose, logs }: any) => (
+const LogsModal = ({ onClose, logs, clearLogs }: any) => (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
         <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -438,9 +458,17 @@ const LogsModal = ({ onClose, logs }: any) => (
                         <p className="text-xs text-slate-500 font-mono">Real-time Feed</p>
                     </div>
                 </div>
-                <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors">
-                    <X className="w-5 h-5" />
-                </button>
+                <div className="flex items-center gap-3">
+                    <button 
+                        onClick={() => { if(confirm("Clear all logs?")) clearLogs(); }}
+                        className="text-[10px] font-bold text-rose-400 hover:text-rose-300 transition-colors uppercase tracking-wider px-2 py-1 rounded hover:bg-rose-500/10"
+                    >
+                        Clear History
+                    </button>
+                    <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
             </div>
             
             <div className="flex-1 overflow-y-auto p-2">
