@@ -59,8 +59,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
               <button onClick={() => onNavigate('library')} className="px-4 py-2 text-sm font-medium rounded-lg transition-colors text-slate-400 hover:text-white hover:bg-white/5">
                 Library
               </button>
-              <button onClick={() => onNavigate('specimens')} className="px-4 py-2 text-sm font-medium rounded-lg transition-colors text-slate-400 hover:text-white hover:bg-white/5">
-                Dataset
+              <button onClick={() => onNavigate('novelty')} className="px-4 py-2 text-sm font-medium rounded-lg transition-colors text-slate-400 hover:text-white hover:bg-white/5">
+                Novelty
               </button>
               <button onClick={() => onNavigate('settings')} className="px-3 py-2 text-sm font-medium text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-white/5">
                 Settings
@@ -110,7 +110,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                         whileInView={{ opacity: 1, scale: 1 }}
                         viewport={{ once: false, amount: 0.3 }}
                         transition={{ duration: 0.5 }}
-                        className="relative overflow-hidden rounded-3xl bg-slate-900 border border-white/10 min-h-[300px] flex flex-col justify-between group"
+                        className="relative overflow-hidden rounded-3xl bg-slate-900/40 backdrop-blur-md border border-white/10 min-h-[300px] flex flex-col justify-between group"
                     >
                         {/* Background Visuals */}
                         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
