@@ -215,7 +215,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
     setIsScanning(true);
     addLog({ module: 'Analysis', event: 'Initializing Deep Diagnostic Scan...', status: 'info' });
 
-    const [selectedVuln, setSelectedVuln] = useState<Vulnerability | null>(null);
+    
 
     try {
         const isPaperOnly = !activeProject.specimens || activeProject.specimens.length === 0;
