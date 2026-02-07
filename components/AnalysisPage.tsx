@@ -21,6 +21,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../AppContext';
 import { callAI } from '../lib/ai';
 import { ProfileDropdown } from './ProfileDropdown';
+import { MobileNav } from './MobileNav';
+import { Menu } from 'lucide-react';
 
 interface AnalysisPageProps {
   onNavigate: (page: 'dashboard' | 'library' | 'specimen-lab' | 'profile' | 'new-project' | 'novelty') => void;
@@ -39,6 +41,8 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { getActiveProject, updateProject, user, addLog } = useApp();
   const activeProject = getActiveProject();
@@ -296,6 +300,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                     <Activity className="w-3 h-3 text-indigo-500" />
                 </div>
                 <h1 className="text-sm font-bold text-white tracking-widest uppercase hidden md:block">Analysis</h1>
+                <h1 className="text-sm font-bold text-white tracking-widest uppercase md:hidden">AE</h1>
             </div>
             
             <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-500">
@@ -303,9 +308,18 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                 <button onClick={() => onNavigate('specimens')} className="hover:text-white transition-colors">Dataset</button>
                 <button onClick={() => onNavigate('library')} className="hover:text-white transition-colors">Library</button>
                 <button className="text-white">Analysis</button>
-                <button onClick={() => onNavigate('novelty')} className="hover:text-white transition-colors">Novelty</button>
-                <button onClick={() => onNavigate('profile')} className="hover:text-white transition-colors">Settings</button>
             </nav>
+            <button 
+                onClick={() => setIsChatOpen(!isChatOpen)}
+                className={`lg:hidden flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-bold uppercase transition-all ${
+                    isChatOpen 
+                    ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-400' 
+                    : 'bg-slate-900 border-white/10 text-slate-400'
+                }`}
+            >
+                <ShieldAlert className="w-4 h-4" />
+                {isChatOpen ? 'Close Chat' : 'AI Chat'}
+            </button>
         </div>
 
             <div className="flex items-center gap-3 md:gap-4">
@@ -321,20 +335,43 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                     <Activity className={`w-3.5 h-3.5 ${isScanning ? 'animate-spin' : ''}`} />
                     {isScanning ? 'Scanning...' : 'Run Diagnostic Scan'}
                 </button>
+                <button 
+                  onClick={() => setIsMobileNavOpen(true)}
+                  className="p-2 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-white md:hidden"
+                >
+                  <Menu className="w-5 h-5" />
+                </button>
                 <ProfileDropdown onNavigate={onNavigate} />
             </div>
       </header>
 
       <main className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
         {/* Left Panel: Fixed Sidebar Chat HUD */}
-        <div className="hidden lg:flex w-[400px] flex-col border-r border-white/5 bg-slate-950/80 backdrop-blur-xl z-20">
-            <div className="p-4 border-b border-white/5 flex items-center justify-between bg-slate-900/40">
-                <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-[0.2em]">Consultation Engine</span>
-                <div className="flex gap-1.5">
-                    <div className="w-1 h-1 rounded-full bg-indigo-500 animate-pulse" />
-                    <div className="w-1 h-1 rounded-full bg-indigo-500/40" />
+        <div className={`
+            ${isChatOpen ? 'fixed inset-0 z-[60] flex' : 'hidden'} 
+            lg:relative lg:flex lg:w-[400px] flex-col border-r border-white/5 bg-slate-950/80 backdrop-blur-xl
+        `}>
+            {/* Mobile Backdrop */}
+            {isChatOpen && (
+                <div 
+                    className="fixed inset-0 bg-slate-950/60 lg:hidden" 
+                    onClick={() => setIsChatOpen(false)}
+                />
+            )}
+            
+            <div className="relative flex flex-col w-full h-full bg-slate-950/90 lg:bg-transparent">
+                <div className="p-4 border-b border-white/5 flex items-center justify-between bg-slate-900/40">
+                    <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-[0.2em]">Consultation Engine</span>
+                    <div className="flex items-center gap-3">
+                        <div className="flex gap-1.5">
+                            <div className="w-1 h-1 rounded-full bg-indigo-500 animate-pulse" />
+                            <div className="w-1 h-1 rounded-full bg-indigo-500/40" />
+                        </div>
+                        <button onClick={() => setIsChatOpen(false)} className="lg:hidden p-1 rounded-lg hover:bg-white/5 text-slate-500">
+                            <XCircle className="w-4 h-4" />
+                        </button>
+                    </div>
                 </div>
-            </div>
             {/* Consultation Content Area */}
             <div className="flex-1 flex flex-col overflow-hidden">
                 {activeProject ? (
@@ -424,8 +461,8 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                     </div>
                 )}
             </div>
-
         </div>
+    </div>
 
         {/* Right Panel: Scrollable Diagnostic HUD */}
         <div className="flex-1 overflow-y-auto bg-slate-950/20 custom-scrollbar relative">
@@ -729,6 +766,13 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
         </div>
     </div>
       </main>
+
+      <MobileNav 
+        isOpen={isMobileNavOpen} 
+        onClose={() => setIsMobileNavOpen(false)} 
+        onNavigate={onNavigate}
+        currentPage="analysis"
+      />
     </div>
   );
 };
