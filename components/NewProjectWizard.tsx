@@ -16,6 +16,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../AppContext';
 import { ProfileDropdown } from './ProfileDropdown';
+import { callAI } from '../lib/ai';
 
 interface NewProjectWizardProps {
   onNavigate: (page: 'dashboard' | 'library' | 'specimen-lab' | 'analysis' | 'novelty' | 'profile') => void;
@@ -29,33 +30,95 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
   const [hypothesis, setHypothesis] = useState("Developing a sub-linear time complexity algorithm for multi-agent pathfinding in non-Euclidean space using quantum-inspired heuristics.");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const { createProject } = useApp();
+  const [fullContent, setFullContent] = useState('');
+  const [initialMetrics, setInitialMetrics] = useState<any>(null);
+  const { createProject, addLog } = useApp();
 
-  const handleFileUpload = (file: File) => {
-    setIsUploading(true);
-    setUploadProgress(0);
-
-    // Simulate upload and AI processing
-    const interval = setInterval(() => {
-        setUploadProgress(prev => {
-            if (prev >= 100) {
-                clearInterval(interval);
-                return 100;
-            }
-            return prev + 5;
-        });
-    }, 100);
-
-    setTimeout(() => {
-        clearInterval(interval);
-        setUploadProgress(100);
+  const extractPdfText = async (file: File): Promise<string> => {
+    const pdfjsLib = (window as any).pdfjsLib;
+    if (!pdfjsLib) return `[PDF extraction unavailable: pdfjsLib not loaded]`;
+    
+    try {
+        const arrayBuffer = await file.arrayBuffer();
+        const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+        const pdf = await loadingTask.promise;
+        let fullText = "";
         
-        // Mock extracted data based on file name or random
-        setHypothesis(`Extracted from ${file.name}: Novel approach to validated consistency in distributed ledger systems using asynchronous consensus mechanisms.`);
-        setAssumptions(['Asynchronous Network', 'Byzantine Fault Tolerance', 'Scalable Nodes', 'Low Latency']);
-        if (!title) setTitle(file.name.split('.')[0]); // Auto-title from filename if empty
+        for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) { // Limit to 10 pages for speed/tokens
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            const strings = content.items.map((item: any) => item.str);
+            fullText += strings.join(" ") + "\n";
+        }
+        return fullText;
+    } catch (e) {
+        console.error("PDF Extraction failed:", e);
+        return `[PDF extraction failed: ${file.name}]`;
+    }
+  };
+
+  const handleFileUpload = async (file: File) => {
+    setIsUploading(true);
+    setUploadProgress(10);
+    addLog({ module: 'Intake', event: `Reading ${file.name}...`, status: 'info' });
+
+    try {
+        const reader = new FileReader();
+        
+        const content = await new Promise<string>(async (resolve, reject) => {
+            reader.onload = (e) => resolve(e.target?.result as string || '');
+            reader.onerror = reject;
+            
+            if (file.type === 'application/pdf') {
+                const text = await extractPdfText(file);
+                resolve(text);
+            } else {
+                reader.readAsText(file);
+            }
+        });
+
+        setFullContent(content);
+        setUploadProgress(50);
+        
+        if (content && content.length > 50) {
+            addLog({ module: 'Intake', event: `Extracting insights from ${file.name}...`, status: 'info' });
+            
+            const extractPrompt = `
+                Analyze this document content and extract the primary research hypothesis and a list of key assumptions.
+                Also, provide an initial assessment of Logic Consistency, Data Lineage, and Novelty (0-100).
+                And provide 5 "Radar Chart" coordinates as numbers (0-100) representing: [Rigor, Consistency, Lineage, Novelty, Methodology].
+                Return result as JSON: { 
+                    "hypothesis": "...", 
+                    "assumptions": ["...", "..."],
+                    "metrics": { "logic": 0, "lineage": 0, "novelty": 0, "radar": [50, 50, 50, 50, 50] }
+                }
+                
+                CONTENT:
+                ${content.slice(0, 4000)}
+            `;
+
+            const result = await callAI(extractPrompt, [], { responseMimeType: 'application/json' });
+            try {
+                const cleaned = result.replace(/```json/g, '').replace(/```/g, '').trim();
+                const data = JSON.parse(cleaned);
+                if (data.hypothesis) setHypothesis(data.hypothesis);
+                if (data.assumptions) setAssumptions(data.assumptions);
+                if (data.metrics) setInitialMetrics(data.metrics);
+            } catch (e) {
+                console.warn("AI extraction failed, using fallback.", e);
+            }
+        }
+
+        if (!title) setTitle(file.name.split('.')[0]);
+        setUploadProgress(100);
+        addLog({ module: 'Intake', event: `${file.name} processed successfully.`, status: 'success' });
+
+    } catch (error) {
+        console.error("File processing error:", error);
+        addLog({ module: 'Intake', event: `Failed to process ${file.name}`, status: 'error' });
+    } finally {
         setIsUploading(false);
-    }, 2500);
+    }
   };
 
   /**
@@ -66,8 +129,18 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
       title: title || "New Research Initiative " + new Date().toLocaleDateString(),
       hypothesis: hypothesis,
       assumptions: assumptions,
+      fullContent: fullContent,
       status: "ANALYZING",
-      progress: 0
+      progress: 0,
+      metrics: {
+          confidence: initialMetrics ? Math.round((initialMetrics.logic + initialMetrics.lineage + initialMetrics.novelty) / 3) : 0,
+          samples: 0,
+          computeTime: "0h 1m",
+          logicConsistency: initialMetrics ? initialMetrics.logic / 100 : 0,
+          dataLineage: initialMetrics ? initialMetrics.lineage / 100 : 0,
+          noveltyIndex: initialMetrics ? initialMetrics.novelty / 100 : 0,
+          radar: initialMetrics?.radar ? initialMetrics.radar.join(',') : "50,50,50,50,50"
+      }
     });
     onNavigate('analysis');
   };
@@ -88,7 +161,7 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-500">
             <button onClick={() => onNavigate('dashboard')} className="hover:text-white transition-colors">Dashboard</button>
             <button onClick={() => onNavigate('analysis')} className="text-white bg-white/5 px-3 py-1 rounded-lg transition-colors">Analysis</button>
-            <button onClick={() => onNavigate('specimen-lab')} className="hover:text-white transition-colors">Dataset</button>
+            <button onClick={() => onNavigate('specimens')} className="hover:text-white transition-colors">Dataset</button>
             <button onClick={() => onNavigate('library')} className="hover:text-white transition-colors">Library</button>
             <button onClick={() => onNavigate('novelty')} className="hover:text-white transition-colors">Novelty</button>
           </nav>
