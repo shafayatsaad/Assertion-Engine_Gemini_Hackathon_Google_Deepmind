@@ -152,7 +152,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       
       // Create a promise that rejects after 5 seconds
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Request timed out')), 5000);
+        setTimeout(() => reject(new Error('Request timed out')), 10000);
       });
 
       // Race the Supabase query against the timeout
@@ -375,12 +375,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     // Check active session
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
+    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
       if (error) {
         console.error('❌ Error getting session:', error);
       } else if (session?.user) {
         console.log('✅ Found existing session for:', session.user.email);
-        fetchUserProfile(session.user.id, session.user);
+        await fetchUserProfile(session.user.id, session.user);
       } else {
         console.log('ℹ️ No active session found');
       }
