@@ -284,14 +284,14 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-rose-500/30 selection:text-rose-200 flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-indigo-500/30 selection:text-indigo-200 flex flex-col overflow-hidden">
       
       {/* Top Bar - Specialized for Room A */}
       <header className="h-16 border-b border-white/5 bg-slate-950 flex items-center justify-between px-4 md:px-6 z-50">
         <div className="flex items-center gap-4 md:gap-8">
             <div className="flex items-center gap-3">
-                <div className="w-6 h-6 bg-rose-500/20 border border-rose-500/50 rounded flex items-center justify-center">
-                    <Activity className="w-3 h-3 text-rose-500" />
+                <div className="w-6 h-6 bg-indigo-500/20 border border-indigo-500/50 rounded flex items-center justify-center">
+                    <Activity className="w-3 h-3 text-indigo-500" />
                 </div>
                 <h1 className="text-sm font-bold text-white tracking-widest uppercase hidden md:block">Analysis</h1>
             </div>
@@ -312,8 +312,8 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                     disabled={isScanning}
                     className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all ${
                         isScanning 
-                        ? 'bg-rose-500/20 border-rose-500/50 text-rose-300' 
-                        : 'bg-rose-500/10 border-rose-500/30 text-rose-500 hover:bg-rose-500/20'
+                        ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300' 
+                        : 'bg-indigo-500/10 border-indigo-500/30 text-indigo-500 hover:bg-indigo-500/20'
                     }`}
                 >
                     <Activity className={`w-3.5 h-3.5 ${isScanning ? 'animate-spin' : ''}`} />
@@ -327,10 +327,10 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
         {/* Left Panel: Fixed Sidebar Chat HUD */}
         <div className="hidden lg:flex w-[400px] flex-col border-r border-white/5 bg-slate-950/80 backdrop-blur-xl z-20">
             <div className="p-4 border-b border-white/5 flex items-center justify-between bg-slate-900/40">
-                <span className="text-[10px] font-bold text-rose-500 uppercase tracking-[0.2em]">Consultation Engine</span>
+                <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-[0.2em]">Consultation Engine</span>
                 <div className="flex gap-1.5">
-                    <div className="w-1 h-1 rounded-full bg-rose-500 animate-pulse" />
-                    <div className="w-1 h-1 rounded-full bg-rose-500/40" />
+                    <div className="w-1 h-1 rounded-full bg-indigo-500 animate-pulse" />
+                    <div className="w-1 h-1 rounded-full bg-indigo-500/40" />
                 </div>
             </div>
 
@@ -346,7 +346,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                             className={`space-y-2 ${msg.role === 'user' ? 'flex flex-col items-end' : ''}`}
                         >
                             {msg.role === 'ai' && (
-                                <div className="flex items-center gap-2 text-rose-400 text-xs font-bold uppercase tracking-wide">
+                                <div className="flex items-center gap-2 text-indigo-400 text-xs font-bold uppercase tracking-wide">
                                     <ShieldAlert className="w-3 h-3" />
                                     {index === 0 ? "Initial Analysis" : "AI Mentor"}
                                 </div>
@@ -383,7 +383,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                     <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-500">
                         <AlertTriangle className="w-8 h-8 mb-4 opacity-50" />
                         <p>No active project selected.</p>
-                        <button onClick={() => onNavigate('dashboard')} className="mt-4 text-rose-400 hover:text-rose-300 text-sm">Return to Dashboard</button>
+                        <button onClick={() => onNavigate('dashboard')} className="mt-4 text-indigo-400 hover:text-indigo-300 text-sm">Return to Dashboard</button>
                     </div>
                 )}
                 <div ref={messagesEndRef} />
@@ -398,9 +398,9 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                         onChange={(e) => setInput(e.target.value)}
                         placeholder="Request Deep Analysis..."
                         disabled={!activeProject}
-                        className="w-full bg-slate-900/50 border border-white/10 rounded-xl pl-4 pr-12 py-3.5 text-sm text-slate-300 focus:outline-none focus:border-rose-500/50 focus:ring-1 focus:ring-rose-500/20 transition-all font-mono"
+                        className="w-full bg-slate-900/50 border border-white/10 rounded-xl pl-4 pr-12 py-3.5 text-sm text-slate-300 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all font-mono"
                     />
-                    <button type="submit" className="absolute right-3 top-3 p-2 bg-rose-500/10 hover:bg-rose-500/20 rounded-lg text-rose-500 transition-colors">
+                    <button type="submit" className="absolute right-3 top-3 p-2 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-lg text-indigo-500 transition-colors">
                         <ArrowRight className="w-4 h-4" />
                     </button>
                 </form>
@@ -411,7 +411,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
         <div className="flex-1 overflow-y-auto bg-slate-950/20 custom-scrollbar relative">
              <div className="relative p-6 lg:p-12 max-w-6xl mx-auto space-y-12">
                  {/* Background Grid */}
-                 <div className="absolute inset-0 bg-[linear-gradient(rgba(244,63,94,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(244,63,94,0.02)_1px,transparent_1px)] bg-[size:50px_50px] pointer-events-none" />
+                 <div className="absolute inset-0 bg-[linear-gradient(rgba(99,102,241,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(99,102,241,0.02)_1px,transparent_1px)] bg-[size:50px_50px] pointer-events-none" />
 
              <div className="relative z-10 max-w-5xl mx-auto space-y-8">
                 
@@ -421,7 +421,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                     <ChevronRight className="w-4 h-4 mx-2 text-slate-700" />
                     <button onClick={() => onNavigate('new-project')} className="hover:text-white transition-colors">Project</button>
                     <ChevronRight className="w-4 h-4 mx-2 text-slate-700" />
-                    <span className="text-rose-500">Analysis</span>
+                    <span className="text-indigo-500">Analysis</span>
                 </nav>
 
                 {/* Header */}
@@ -437,8 +437,8 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                         </div>
                     </div>
                     
-                    <div className="flex items-center gap-3 text-xs md:text-sm text-rose-400 bg-rose-500/5 border-l-2 border-rose-500 px-4 py-2">
-                         <span className="w-1.5 h-4 bg-rose-500 inline-block mr-2" />
+                    <div className="flex items-center gap-3 text-xs md:text-sm text-indigo-400 bg-indigo-500/5 border-l-2 border-indigo-500 px-4 py-2">
+                         <span className="w-1.5 h-4 bg-indigo-500 inline-block mr-2" />
                          <span className="block">Real-time threat modeling. {activeProject ? <span className="font-bold">SYSTEM ACTIVE</span> : "WAITING FOR INPUT"}</span>
                     </div>
                 </div>
@@ -450,7 +450,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                     <div className="lg:col-span-2 glass-card p-6 rounded-2xl bg-slate-900/40 border border-white/5">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-xs font-mono text-slate-500 uppercase tracking-widest">System Health</h3>
-                            <span className={`text-[10px] font-bold uppercase ${metrics.confidence > 50 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            <span className={`text-[10px] font-bold uppercase ${metrics.confidence > 50 ? 'text-emerald-400' : 'text-indigo-400'}`}>
                                 {metrics.confidence > 50 ? 'Stable' : 'Below Par'}
                             </span>
                         </div>
@@ -567,14 +567,14 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                 <div className="pt-12">
                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
                         <div>
-                            <h3 className="flex items-center gap-3 text-xs md:text-sm font-mono text-rose-500 uppercase tracking-[0.4em] font-black mb-2">
+                            <h3 className="flex items-center gap-3 text-xs md:text-sm font-mono text-indigo-500 uppercase tracking-[0.4em] font-black mb-2">
                                 <Target className="w-4 h-4" />
                                 Mission Protocol
                             </h3>
                             <p className="text-sm text-slate-400 font-medium max-w-xl">Strategic objectives and operational guardrails derived from multimodal diagnostic analysis.</p>
                         </div>
                         <div className="flex items-center gap-6 text-[10px] font-mono text-slate-500 uppercase bg-slate-900/40 border border-white/5 py-2 px-5 rounded-full backdrop-blur-sm self-start md:self-center">
-                            <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" /> Sector: Research Delta</span>
+                            <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" /> Sector: Research Delta</span>
                             <div className="w-px h-4 bg-white/10" />
                             <span>Security: Level 5</span>
                         </div>
@@ -617,14 +617,14 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                          </div>
                          
                          {/* Mission Abort (Out of Scope) */}
-                         <div className="glass-card p-1 rounded-3xl bg-rose-500/5 border border-rose-500/10 overflow-hidden group hover:border-rose-500/30 transition-all duration-500">
+                         <div className="glass-card p-1 rounded-3xl bg-indigo-500/5 border border-indigo-500/10 overflow-hidden group hover:border-indigo-500/30 transition-all duration-500">
                              <div className="p-8 space-y-8 bg-slate-950/40 rounded-[22px] h-full">
                                  <div className="flex items-center gap-6">
-                                    <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center shadow-lg shadow-rose-500/10">
-                                        <XCircle className="w-7 h-7 text-rose-500" />
+                                    <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shadow-lg shadow-indigo-500/10">
+                                        <XCircle className="w-7 h-7 text-indigo-500" />
                                     </div>
                                     <div>
-                                        <div className="text-[10px] text-rose-500 font-bold uppercase tracking-[0.2em] mb-1">Status: Restricted</div>
+                                        <div className="text-[10px] text-indigo-500 font-bold uppercase tracking-[0.2em] mb-1">Status: Restricted</div>
                                         <div className="text-xl font-black text-white tracking-tight">Mission Abort Zone</div>
                                     </div>
                                  </div>
@@ -638,10 +638,10 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                                             transition={{ delay: i * 0.1 }}
                                             className="flex gap-6 group/item"
                                          >
-                                             <div className="text-sm font-mono text-rose-500/30 mt-1 font-bold">E{i}</div>
+                                             <div className="text-sm font-mono text-indigo-500/30 mt-1 font-bold">E{i}</div>
                                              <div>
-                                                <p className="text-base text-slate-400 font-bold mb-1 line-through decoration-rose-500/40 opacity-70 group-hover/item:opacity-100 transition-opacity uppercase tracking-tight">{item.split(':')[0]}</p>
-                                                <p className="text-xs text-rose-500/50 leading-relaxed font-mono italic">
+                                                <p className="text-base text-slate-400 font-bold mb-1 line-through decoration-indigo-500/40 opacity-70 group-hover/item:opacity-100 transition-opacity uppercase tracking-tight">{item.split(':')[0]}</p>
+                                                <p className="text-xs text-indigo-500/50 leading-relaxed font-mono italic">
                                                     {item.split(':')[1] || "Operational exclusion required to prevent research dead-ends."}
                                                 </p>
                                              </div>
@@ -660,12 +660,12 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                      <div className="mb-16 text-center">
                         <h3 className="text-[10px] font-mono text-slate-500 uppercase tracking-[0.6em] font-black mb-4">Operational Roadmap</h3>
                         <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tight">Synapse to Syntax Protocol</h2>
-                        <div className="w-12 h-1 bg-rose-500 mx-auto mt-6 rounded-full" />
+                        <div className="w-12 h-1 bg-indigo-500 mx-auto mt-6 rounded-full" />
                      </div>
                      
                      <div className="max-w-4xl mx-auto relative px-4 md:px-0">
                          {/* Centered Vertical Line */}
-                         <div className="absolute left-6 md:left-1/2 md:-translate-x-1/2 top-0 h-full w-px bg-slate-800 shadow-[0_0_15px_rgba(244,63,94,0.1)]" />
+                         <div className="absolute left-6 md:left-1/2 md:-translate-x-1/2 top-0 h-full w-px bg-slate-800 shadow-[0_0_15px_rgba(99,102,241,0.1)]" />
                          
                          <div className="space-y-16">
                              <RoadmapStep 
