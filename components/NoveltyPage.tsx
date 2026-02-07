@@ -14,7 +14,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../AppContext';
 import { ProfileDropdown } from './ProfileDropdown';
-import { GoogleGenAI } from "@google/genai";
+import { callAI } from '../lib/ai';
 
 interface NoveltyPageProps {
   onNavigate: (page: 'dashboard' | 'library' | 'specimen-lab' | 'analysis' | 'new-project' | 'profile') => void;
@@ -26,57 +26,81 @@ export const NoveltyPage: React.FC<NoveltyPageProps> = ({ onNavigate }) => {
   
   const [selectedPaper, setSelectedPaper] = useState<any>(null);
   const [isScanning, setIsScanning] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const handleScan = async () => {
-      if (!activeProject) return;
+      if (!activeProject || isScanning) return;
       
       setIsScanning(true);
       addLog({ module: 'Novelty', event: `Started literature scan for ${activeProject.title}`, status: 'info' });
 
       try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const systemPrompt = `
-            You are a rigorous academic novelty engine. Your task is to analyze the user's research hypothesis and generate 3 "conflicting" or "related" academic papers that might challenge the novelty of their work.
+             You are a rigorous academic novelty engine. Your task is to analyze the user's research hypothesis and generate 3 "conflicting" or "related" academic papers that might challenge the novelty of their work.
             
             Current Hypothesis: "${activeProject.hypothesis}"
             Assumptions: ${activeProject.assumptions.join(', ')}
+            Content: ${activeProject.fullContent?.slice(0, 3000) || 'No full content provided.'}
+            ${searchTerm ? `Specific Focus / Keywords: "${searchTerm}"` : ''}
 
-            Return a JSON object with a 'papers' array. Each paper should have:
-            - id: string (e.g. "ArXiv-2301")
+            IMPORTANT: Perform a DEEP comparison. Do not just look at abstracts. 
+            Identify specific:
+            1. MODEL ARCHITECTURES: e.g., Transformer variations, CNN layers, Loss functions.
+            2. DATASETS: e.g., ImageNet, SQuAD, or custom clinical datasets.
+            3. BENCHMARKS/RESULTS: Precision/Recall, Accuracy, F1 scores compared to the user's goals.
+
+            Return a RAW JSON object with a 'papers' array and a 'pivots' array. 
+            Each paper should have:
+            - id: string
             - title: string
-            - similarity: number (0-100 score of overlap)
-            - status: "critical" | "warning" | "safe" (based on similarity > 70 critical, > 30 warning)
-            - abstract: string (1-2 sentences summarizing the paper and how it overlaps)
+            - similarity: number (0 to 100)
+            - status: "critical" | "warning" | "safe"
+            - abstract: string
+            - architecture: string (SPECIFIC architectural overlap/difference)
+            - dataset: string (SPECIFIC dataset overlap/difference)
+            - results: string (SPECIFIC metric comparison)
             
-            The papers should sound real but can be hallucinated for this simulation.
+            Each pivot should have:
+            - type: "DOMAIN PIVOT" | "METHOD PIVOT" | "CONSTRAINT PIVOT"
+            - desc: string (specific actionable advice to bypass this collision)
+            - impact: "high" | "medium" | "low"
+            
+            The papers should sound like real SOTA (State of the Art) research.
         `;
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
-            contents: [{ role: 'user', parts: [{ text: systemPrompt }] }],
-            config: { responseMimeType: "application/json" }
+        const resultText = await callAI(systemPrompt, [], {
+            responseMimeType: "application/json",
+            temperature: 0.5
         });
 
-        const result = JSON.parse(response.text || '{ "papers": [] }');
-        const papers = result.papers || [];
+        // Handle possible markdown wrapping in non-Gemini responses
+        const cleanedText = resultText.replace(/```json/g, '').replace(/```/g, '').trim();
+        const resultJson = JSON.parse(cleanedText || '{ "papers": [], "pivots": [] }');
+        const papers = resultJson.papers || [];
+        const pivots = resultJson.pivots || [];
 
-        // Add visual placeholders since AI doesn't generate images yet
+        // Add visual placeholders
         const enrichedPapers = papers.map((p: any) => ({
             ...p,
-            image: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&q=80&w=400" // Generic abstract background
+            image: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&q=80&w=400"
         }));
 
         updateProject(activeProject.id, { 
             noveltyPapers: enrichedPapers,
+            pivots: pivots,
             metrics: { ...activeProject.metrics, noveltyIndex: enrichedPapers.length > 0 ? enrichedPapers[0].similarity / 100 : 0.1 }
         });
         
         setSelectedPaper(enrichedPapers[0]);
-        addLog({ module: 'Novelty', event: `Scan complete. ${enrichedPapers.length} collisions found.`, status: 'warning' });
+        addLog({ module: 'Novelty', event: `Scan complete. Found ${papers.length} collisions and ${pivots.length} pivot strategies.`, status: 'success' });
 
-      } catch (e) {
+      } catch (e: any) {
           console.error(e);
-          addLog({ module: 'Novelty', event: `Scan failed to connect to archive.`, status: 'error' });
+          let errorEvent = `Scan failed to connect to archive.`;
+          if (e.message?.includes('429')) {
+              errorEvent = "Quota exceeded (15 RPM). Please wait a moment.";
+          }
+          addLog({ module: 'Novelty', event: errorEvent, status: 'error' });
       } finally {
           setIsScanning(false);
       }
@@ -107,7 +131,7 @@ export const NoveltyPage: React.FC<NoveltyPageProps> = ({ onNavigate }) => {
 
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-500">
             <button onClick={() => onNavigate('dashboard')} className="hover:text-white transition-colors">Dashboard</button>
-            <button onClick={() => onNavigate('specimen-lab')} className="hover:text-white transition-colors">Dataset</button>
+            <button onClick={() => onNavigate('specimens')} className="hover:text-white transition-colors">Dataset</button>
             <button onClick={() => onNavigate('library')} className="hover:text-white transition-colors">Library</button>
             <button className="text-cyan-400">Novelty</button>
           </nav>
@@ -153,6 +177,8 @@ export const NoveltyPage: React.FC<NoveltyPageProps> = ({ onNavigate }) => {
                     <Search className="absolute left-4 top-3.5 w-5 h-5 text-slate-500" />
                     <input 
                         type="text" 
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
                         placeholder={activeProject ? "Enter thesis keywords or upload abstract..." : "Create a project to scan..."}
                         disabled={!activeProject}
                         className="w-full bg-slate-900/50 border border-white/10 rounded-lg pl-12 pr-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-all placeholder:text-slate-600 disabled:opacity-50"
@@ -274,9 +300,31 @@ export const NoveltyPage: React.FC<NoveltyPageProps> = ({ onNavigate }) => {
                                 <h3 className="text-white font-bold leading-tight">{currentPaper.title}</h3>
                                 <span className="text-[10px] text-slate-500 font-mono">ID: {currentPaper.id}</span>
                             </div>
-                            <p className="text-sm text-slate-300 leading-relaxed font-mono">
+                            <p className="text-sm text-slate-300 leading-relaxed font-mono mb-6">
                                 "{currentPaper.abstract}"
                             </p>
+
+                            {/* Deep Comparison Metrics */}
+                            <div className="mt-auto space-y-4 pt-4 border-t border-white/5">
+                                {currentPaper.architecture && (
+                                    <div className="space-y-1">
+                                        <div className="text-[10px] text-rose-400 font-bold uppercase tracking-wider">Architecture Collision</div>
+                                        <p className="text-[11px] text-slate-400 leading-tight">{currentPaper.architecture}</p>
+                                    </div>
+                                )}
+                                {currentPaper.dataset && (
+                                    <div className="space-y-1">
+                                        <div className="text-[10px] text-rose-400 font-bold uppercase tracking-wider">Dataset Overlap</div>
+                                        <p className="text-[11px] text-slate-400 leading-tight">{currentPaper.dataset}</p>
+                                    </div>
+                                )}
+                                {currentPaper.results && (
+                                    <div className="space-y-1">
+                                        <div className="text-[10px] text-rose-400 font-bold uppercase tracking-wider">Performance Benchmark</div>
+                                        <p className="text-[11px] text-slate-400 leading-tight">{currentPaper.results}</p>
+                                    </div>
+                                )}
+                            </div>
                         </motion.div>
                     </AnimatePresence>
 
@@ -284,10 +332,10 @@ export const NoveltyPage: React.FC<NoveltyPageProps> = ({ onNavigate }) => {
             </motion.div>
         )}
 
-        {/* Strategy Pivot Panel - Show only if we have results */}
-        {papers.length > 0 && (
-            <div className="pt-8 space-y-6">
-                <motion.div
+        {/* Strategy Pivot Panel */}
+        {activeProject?.pivots && activeProject.pivots.length > 0 && (
+            <div className="pt-16 pb-20 space-y-8">
+                <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: false }}
@@ -298,30 +346,17 @@ export const NoveltyPage: React.FC<NoveltyPageProps> = ({ onNavigate }) => {
                 </motion.div>
 
                 <div className="grid md:grid-cols-3 gap-6">
-                    <PivotCard 
-                        type="DOMAIN PIVOT"
-                        icon={Globe}
-                        color="text-emerald-400"
-                        borderColor="border-emerald-500/30"
-                        desc="Shift focus from general agriculture to Ag-Tech vertical optimization specifically for hyper-arid soil types."
-                        delay={0.1}
-                    />
-                    <PivotCard 
-                        type="METHOD PIVOT"
-                        icon={LayoutGrid}
-                        color="text-cyan-400"
-                        borderColor="border-cyan-500/30"
-                        desc="Replace current CNN backbone with Spatio-Temporal Transformers for 4D environmental mapping."
-                        delay={0.2}
-                    />
-                    <PivotCard 
-                        type="CONSTRAINT PIVOT"
-                        icon={Cpu}
-                        color="text-indigo-400"
-                        borderColor="border-indigo-500/30"
-                        desc="Adapt the entire model for Ultra-Low Power Edge Devices with 90% parameter pruning."
-                        delay={0.3}
-                    />
+                    {activeProject.pivots.map((pivot, idx) => (
+                        <PivotCard 
+                            key={idx}
+                            type={pivot.type}
+                            icon={pivot.type === 'DOMAIN PIVOT' ? Globe : pivot.type === 'METHOD PIVOT' ? LayoutGrid : Cpu}
+                            color={pivot.type === 'DOMAIN PIVOT' ? "text-emerald-400" : pivot.type === 'METHOD PIVOT' ? "text-cyan-400" : "text-indigo-400"}
+                            borderColor={pivot.type === 'DOMAIN PIVOT' ? "border-emerald-500/30" : pivot.type === 'METHOD PIVOT' ? "border-cyan-500/30" : "border-indigo-500/30"}
+                            desc={pivot.desc}
+                            delay={idx * 0.1}
+                        />
+                    ))}
                 </div>
             </div>
         )}
