@@ -623,6 +623,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                                     desc={v.desc}
                                     riskScore={v.riskScore}
                                     action={v.action}
+                                    onClick={() => setSelectedVuln(v)}
                                 />
                             ))
                         ) : (
