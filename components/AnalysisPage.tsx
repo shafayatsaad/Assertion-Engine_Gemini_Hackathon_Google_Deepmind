@@ -886,48 +886,123 @@ const getRadarPoints = (radarString: string) => {
     return `${p1} ${p2} ${p3} ${p4} ${p5}`;
 };
 
-const VulnerabilityCard = ({ type, title, desc, riskScore, action, onClick }: any) => {
+const VulnerabilityCard = ({ type, title, desc, riskScore, action }: any) => {
+    const [isExpanded, setIsExpanded] = useState(false);
     const isCritical = type === 'CRITICAL';
     const isModerate = type === 'MODERATE';
     
     return (
         <motion.div 
+            layout
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
-            onClick={onClick}
-            className={`p-5 rounded-2xl border transition-all hover:bg-white/[0.02] cursor-pointer group ${
-                isCritical ? 'bg-indigo-500/[0.03] border-indigo-500/20 hover:border-indigo-500/40' : 
-                isModerate ? 'bg-amber-500/[0.03] border-amber-500/20 hover:border-amber-500/40' : 
-                'bg-cyan-500/[0.03] border-cyan-500/20 hover:border-cyan-500/40'
+            onClick={() => setIsExpanded(!isExpanded)}
+            className={`relative overflow-hidden rounded-3xl border transition-all duration-500 cursor-pointer group ${
+                isExpanded ? 'col-span-1 md:col-span-2 lg:col-span-3 z-10' : ''
+            } ${
+                isCritical ? 'bg-rose-950/20 border-rose-500/20 hover:border-rose-500/40' : 
+                isModerate ? 'bg-amber-950/20 border-amber-500/20 hover:border-amber-500/40' : 
+                'bg-indigo-950/20 border-indigo-500/20 hover:border-indigo-500/40'
             }`}
         >
-            <div className="flex justify-between items-start mb-4">
-                <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
-                    isCritical ? 'bg-indigo-500/20 text-indigo-400' : 
-                    isModerate ? 'bg-amber-500/20 text-amber-400' : 
-                    'bg-cyan-500/20 text-cyan-400'
-                }`}>
-                    {type}
-                </span>
-                {isCritical ? <Database className="w-3.5 h-3.5 text-slate-600" /> : isModerate ? <Activity className="w-3.5 h-3.5 text-slate-600" /> : <Shield className="w-3.5 h-3.5 text-slate-600" />}
-            </div>
+            {/* Glass Background */}
+            <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-md" />
             
-            <h4 className="text-white font-bold text-sm mb-2 uppercase tracking-wide group-hover:text-indigo-300 transition-colors">{title}</h4>
-            <p className="text-slate-400 text-xs leading-relaxed mb-6 line-clamp-3 font-mono">
-                {desc}
-            </p>
-            
-            <div className="flex justify-between items-center mt-auto pt-4 border-t border-white/5">
-                <div className="flex flex-col">
-                    <span className="text-[8px] text-slate-500 uppercase font-mono">Risk Impact</span>
-                    <span className="text-xs font-bold text-slate-300 font-mono">{riskScore}</span>
+            {/* Gradient Glow */}
+            <div className={`absolute -top-20 -right-20 w-64 h-64 rounded-full blur-[80px] opacity-20 transition-opacity duration-700 ${
+                isExpanded ? 'opacity-40' : 'opacity-20 group-hover:opacity-30'
+            } ${
+                isCritical ? 'bg-rose-500' : 
+                isModerate ? 'bg-amber-500' : 
+                'bg-indigo-500'
+            }`} />
+
+            <div className="relative p-6 md:p-8">
+                {/* Header */}
+                <div className="flex justify-between items-start mb-6">
+                    <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-xl border ${
+                            isCritical ? 'bg-rose-500/10 border-rose-500/30 text-rose-400' : 
+                            isModerate ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' : 
+                            'bg-indigo-500/10 border-indigo-500/30 text-indigo-400'
+                        }`}>
+                            {isCritical ? <ShieldAlert className="w-5 h-5" /> : 
+                             isModerate ? <AlertTriangle className="w-5 h-5" /> : 
+                             <Activity className="w-5 h-5" />}
+                        </div>
+                        <div>
+                            <span className={`text-[10px] font-bold uppercase tracking-widest ${
+                                isCritical ? 'text-rose-400' : 
+                                isModerate ? 'text-amber-400' : 
+                                'text-indigo-400'
+                            }`}>{type}</span>
+                            <h3 className={`text-lg md:text-xl font-black text-white leading-tight mt-0.5 ${isExpanded ? 'max-w-none' : 'max-w-[200px] truncate'}`}>
+                                {title}
+                            </h3>
+                        </div>
+                    </div>
+                    
+                    <button className={`p-2 rounded-full transition-colors ${
+                        isExpanded ? 'bg-white/10 text-white' : 'text-slate-500 hover:text-white hover:bg-white/5'
+                    }`}>
+                        {isExpanded ? <XCircle className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+                    </button>
                 </div>
-                <div className={`p-1.5 rounded-lg transition-colors ${
-                     isCritical ? 'bg-indigo-500/10 text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white' : 
-                     isModerate ? 'bg-amber-500/10 text-amber-400 group-hover:bg-amber-500 group-hover:text-white' : 
-                     'bg-cyan-500/10 text-cyan-400 group-hover:bg-cyan-500 group-hover:text-white'
-                }`}>
-                    <Maximize2 className="w-3.5 h-3.5" />
+
+                {/* Content */}
+                <div className="space-y-6">
+                    <motion.div layout="position">
+                        <p className={`text-slate-300 font-light leading-relaxed ${isExpanded ? 'text-base' : 'text-sm line-clamp-2'}`}>
+                            {desc}
+                        </p>
+                    </motion.div>
+
+                    <AnimatePresence>
+                        {isExpanded && (
+                            <motion.div 
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="pt-6 border-t border-white/5 grid md:grid-cols-2 gap-6 overflow-hidden"
+                            >
+                                <div className="space-y-2">
+                                    <h5 className="text-[10px] font-mono text-slate-500 uppercase tracking-[0.2em] font-bold">Risk Assessment</h5>
+                                    <div className="flex items-end gap-3">
+                                        <span className={`text-4xl font-black ${
+                                            isCritical ? 'text-rose-500' : 
+                                            isModerate ? 'text-amber-500' : 
+                                            'text-indigo-500'
+                                        }`}>{riskScore}</span>
+                                        <div className="w-full h-1.5 bg-slate-800 rounded-full mb-2 max-w-[100px] overflow-hidden">
+                                            <div 
+                                                className={`h-full rounded-full ${
+                                                    isCritical ? 'bg-rose-500' : 
+                                                    isModerate ? 'bg-amber-500' : 
+                                                    'bg-indigo-500'
+                                                }`} 
+                                                style={{ width: `${(parseInt(riskScore) / 10) * 100}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-slate-500 font-medium leading-relaxed mt-2">
+                                        This risk score indicates the potential impact on logic integrity and research validity.
+                                    </p>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <h5 className="text-[10px] font-mono text-slate-500 uppercase tracking-[0.2em] font-bold">Suggested Remediation</h5>
+                                    <div className="p-4 rounded-xl bg-white/[0.03] border border-white/5 flex gap-3">
+                                        <div className="mt-0.5">
+                                            <Terminal className="w-4 h-4 text-emerald-400" />
+                                        </div>
+                                        <p className="text-sm text-emerald-100/80 font-mono leading-relaxed">
+                                            {">"} {action}
+                                        </p>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </div>
         </motion.div>
