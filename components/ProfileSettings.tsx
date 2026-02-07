@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { User, Mail, Lock, Briefcase, Building2, Save, Loader2, ArrowLeft } from 'lucide-react';
+import { User, Mail, Lock, Briefcase, Building2, Save, Loader2, ArrowLeft, Menu } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useApp } from '../AppContext';
+import { MobileNav } from './MobileNav';
+import { ProfileDropdown } from './ProfileDropdown';
 
 interface ProfileSettingsProps {
   onNavigate: (page: 'dashboard') => void;
@@ -12,6 +14,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ onNavigate }) 
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -77,13 +80,24 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ onNavigate }) 
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <button
-            onClick={() => onNavigate('dashboard')}
-            className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-4"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm">Back to Dashboard</span>
-          </button>
+          <div className="flex items-center justify-between gap-2 text-slate-400 hover:text-white transition-colors mb-4">
+            <button
+              onClick={() => onNavigate('dashboard')}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="text-sm">Back to Dashboard</span>
+            </button>
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => setIsMobileNavOpen(true)}
+                className="p-2 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-white md:hidden"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+              <ProfileDropdown onNavigate={onNavigate} />
+            </div>
+          </div>
           <h1 className="text-3xl font-bold text-white mb-2">Profile Settings</h1>
           <p className="text-slate-400">Manage your account information and preferences</p>
         </motion.div>
@@ -255,6 +269,13 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ onNavigate }) 
           </form>
         </motion.div>
       </div>
+
+      <MobileNav 
+        isOpen={isMobileNavOpen} 
+        onClose={() => setIsMobileNavOpen(false)} 
+        onNavigate={onNavigate}
+        currentPage="profile"
+      />
     </div>
   );
 };
