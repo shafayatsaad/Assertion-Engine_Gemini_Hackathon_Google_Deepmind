@@ -61,31 +61,31 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
   };
 
   const handleFileUpload = async (file: File) => {
+    console.log('📂 handleFileUpload called with file:', file.name, file.type, file.size);
     setIsUploading(true);
     setUploadProgress(10);
     addLog({ module: 'Intake', event: `Reading ${file.name}...`, status: 'info' });
 
     try {
-        const reader = new FileReader();
+        let content: string;
         
-        const content = await new Promise<string>(async (resolve, reject) => {
-            reader.onload = (e) => resolve(e.target?.result as string || '');
-            reader.onerror = reject;
-            
-            if (file.type === 'application/pdf') {
-                try {
-                    const text = await extractPdfText(file);
-                    resolve(text);
-                } catch (pdfError) {
-                    console.warn("PDF specific extraction failed, falling back to text", pdfError);
-                    // Fallback to reading as text, though it might be raw PDF data
-                    // Better to resolve with empty or error string than reject?
-                    resolve(`[PDF Content Extraction Failed]`);
-                }
-            } else {
-                reader.readAsText(file);
+        if (file.type === 'application/pdf') {
+            // Handle PDF files
+            try {
+                content = await extractPdfText(file);
+            } catch (pdfError) {
+                console.warn("PDF specific extraction failed", pdfError);
+                content = `[PDF Content Extraction Failed]`;
             }
-        });
+        } else {
+            // Handle text files
+            content = await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target?.result as string || '');
+                reader.onerror = reject;
+                reader.readAsText(file);
+            });
+        }
 
         if (!content || content.length < 50) {
             console.warn("Extracted content is very short:", content);
@@ -235,7 +235,9 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
                 type="file" 
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
                 onChange={(e) => {
+                  console.log('📁 File input onChange fired', e.target.files);
                   if (e.target.files && e.target.files.length > 0) {
+                    console.log('📁 Calling handleFileUpload with:', e.target.files[0].name);
                     handleFileUpload(e.target.files[0]);
                   }
                 }}
