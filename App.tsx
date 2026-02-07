@@ -127,7 +127,8 @@ const MainApp = () => {
   type Page = 'landing' | 'signin' | 'signup' | 'profile' | 'settings' | 'dashboard' | 'newproject' | 'library' | 'specimens' | 'analysis' | 'novelty';
   const [currentPage, setCurrentPage] = useState<Page>(() => {
     const saved = localStorage.getItem('assertions_current_page');
-    return (saved as Page) || 'landing';
+    const validPages: Page[] = ['landing', 'signin', 'signup', 'profile', 'settings', 'dashboard', 'newproject', 'library', 'specimens', 'analysis', 'novelty'];
+    return (saved && validPages.includes(saved as Page)) ? (saved as Page) : 'landing';
   });
   const { user, activeProjectId, projects, setActiveProject } = useApp();
 
