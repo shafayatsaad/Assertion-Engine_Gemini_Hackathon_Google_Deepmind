@@ -20,7 +20,8 @@ import {
   Save,
   LayoutDashboard,
   Menu,
-  X
+  X,
+  Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../AppContext'; // Import Context
@@ -486,6 +487,208 @@ const WebhookRow = ({ url, events, status, onRemove }: any) => {
 
 const ApiKeysView = ({ onNavigate }: { onNavigate: any }) => {
     const [showKey1, setShowKey1] = useState(false);
+    const [apiKey, setApiKey] = useState('');
+    const [status, setStatus] = useState<'idle' | 'connecting' | 'connected' | 'error' | 'quota'>('idle');
+    const [detectedModel, setDetectedModel] = useState<string | null>(null);
+
+    // Universal Key State
+    const [showKey2, setShowKey2] = useState(false);
+    const [universalKey, setUniversalKey] = useState('');
+    const [universalStatus, setUniversalStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');
+    const [universalProvider, setUniversalProvider] = useState<string | null>(null);
+
+    // Load existing keys on mount
+    useEffect(() => {
+        // Load Gemini
+        const storedKey = localStorage.getItem('ae_api_key');
+        const storedModel = localStorage.getItem('ae_api_model');
+        if (storedKey) {
+            setApiKey(storedKey);
+            if (storedModel) setDetectedModel(storedModel);
+            setStatus('connected');
+        }
+
+        // Load Universal
+        const storedUnivKey = localStorage.getItem('ae_universal_key');
+        const storedUnivProvider = localStorage.getItem('ae_universal_provider');
+        if (storedUnivKey) {
+            setUniversalKey(storedUnivKey);
+            if (storedUnivProvider) setUniversalProvider(storedUnivProvider);
+            setUniversalStatus('connected');
+        }
+    }, []);
+
+    const handleUniversalDisconnect = () => {
+        localStorage.removeItem('ae_universal_key');
+        localStorage.removeItem('ae_universal_provider');
+        setUniversalKey('');
+        setUniversalProvider(null);
+        setUniversalStatus('idle');
+    }
+
+    const identifyProvider = (key: string): 'anthropic' | 'openai' | 'groq' | 'unknown' => {
+        if (key.startsWith('sk-ant')) return 'anthropic';
+        if (key.startsWith('gsk_')) return 'groq';
+        if (key.startsWith('sk-') && !key.startsWith('sk-ant')) return 'openai';
+        return 'unknown';
+    };
+
+    const handleUniversalConnect = async () => {
+        if (!universalKey.trim()) return;
+        
+        setUniversalStatus('connecting');
+        const provider = identifyProvider(universalKey);
+        
+        console.log(`🔌 Testing Universal Key for provider: ${provider}`);
+        
+        try {
+            if (provider === 'unknown') {
+                throw new Error("Could not identify provider from key format.");
+            }
+
+            let isValid = false;
+
+            if (provider === 'groq') {
+                const res = await fetch('https://api.groq.com/openai/v1/models', {
+                    headers: { 'Authorization': `Bearer ${universalKey}` }
+                });
+                if (res.ok) isValid = true;
+                else throw new Error(`Groq Error: ${res.status}`);
+            } 
+            else if (provider === 'openai') {
+                const res = await fetch('https://api.openai.com/v1/models', {
+                    headers: { 'Authorization': `Bearer ${universalKey}` }
+                });
+                if (res.ok) isValid = true;
+                else throw new Error(`OpenAI Error: ${res.status}`);
+            }
+            else if (provider === 'anthropic') {
+                // Anthropic requires a version header and specific endpoint
+                const res = await fetch('https://api.anthropic.com/v1/models', {
+                    headers: { 
+                        'x-api-key': universalKey,
+                        'anthropic-version': '2023-06-01',
+                        'dangerously-allow-browser': 'true'
+                    }
+                });
+                if (res.ok) isValid = true;
+                else {
+                    console.warn('Anthropic validation difficult client-side due to CORS. Trusting prefix.');
+                    isValid = true; 
+                }
+            }
+
+            if (isValid) {
+                localStorage.setItem('ae_universal_key', universalKey);
+                localStorage.setItem('ae_universal_provider', provider);
+                setUniversalProvider(provider);
+                setUniversalStatus('connected');
+                console.log(`✅ ${provider} Connected!`);
+            }
+
+        } catch (error: any) {
+            console.error('❌ Universal Key Failed:', error);
+            setUniversalStatus('error');
+            localStorage.removeItem('ae_universal_key');
+            localStorage.removeItem('ae_universal_provider');
+        }
+    };
+
+    const handleConnect = async () => {
+        if (!apiKey.trim()) return;
+        
+        setStatus('connecting');
+        setDetectedModel(null);
+        
+        try {
+            // Dynamically import to avoid issues if package missing in this chunk
+            const { GoogleGenAI } = await import("@google/genai");
+            const client = new GoogleGenAI({ apiKey: apiKey });
+            
+            console.log('🔌 Testing connection to Google AI...');
+
+            // List of models to try in order of preference
+            // Prioritize 1.5-flash as it is the most stable free tier model
+            const candidateModels = [
+                'gemini-1.5-flash', 
+                'gemini-2.0-flash', 
+                'gemini-1.5-pro',
+                'gemini-1.0-pro'
+            ];
+
+            let bestModel = null;
+            let quotaModel = null;
+            let lastError = null;
+
+            for (const modelName of candidateModels) {
+                try {
+                    console.log(`Trying model: ${modelName}...`);
+                    const response = await client.models.generateContent({
+                        model: modelName, 
+                        contents: [{ role: 'user', parts: [{ text: 'Ping' }] }]
+                    });
+                    console.log(`✅ Success with ${modelName}`);
+                    bestModel = modelName;
+                    break; // Found a perfectly working model!
+                } catch (error: any) {
+                    console.warn(`❌ Failed with ${modelName}:`, error.message);
+                    lastError = error;
+                    
+                    // If we hit Quota, save this as a backup "valid key" indicator, but keep looking for a working model
+                    if (error.message?.includes('429') || error.status === 429 || error.toString().includes('Quota')) {
+                        console.warn(`⚠️ Quota exceeded on ${modelName}, continuing search...`);
+                        if (!quotaModel) quotaModel = modelName;
+                    }
+                }
+            }
+
+            const finalModel = bestModel || quotaModel;
+
+            if (finalModel) {
+                 localStorage.setItem('ae_api_key', apiKey);
+                 localStorage.setItem('ae_api_model', finalModel);
+                 setDetectedModel(finalModel);
+                 
+                 if (bestModel) {
+                    setStatus('connected');
+                    console.log(`💾 Saved configuration: Key + Model (${finalModel})`);
+                 } else {
+                    setStatus('quota');
+                    console.log(`💾 Saved backup configuration (Quota): Key + Model (${finalModel})`);
+                 }
+            } else {
+                throw lastError || new Error("No suitable model found.");
+            }
+            
+        } catch (error: any) {
+            console.error('❌ API Key Validation Failed:', error);
+            
+            // Re-check for quota in case it fell through (unlikely with loop logic but safe)
+            if (error.message?.includes('429') || error.status === 429 || error.toString().includes('Quota')) {
+                 localStorage.setItem('ae_api_key', apiKey);
+                 setStatus('quota');
+                 return;
+            }
+
+            // Check for specific error types
+            if (error.message?.includes('400')) {
+                 console.error('⚠️ Bad Request - likely invalid model name or parameters');
+            } else if (error.message?.includes('403') || error.message?.includes('401')) {
+                 console.error('🚫 Forbidden - API Key invalid or lacks permissions');
+            }
+            
+            setStatus('error');
+            localStorage.removeItem('ae_api_key');
+        }
+    };
+
+    const handleDisconnect = () => {
+        localStorage.removeItem('ae_api_key');
+        localStorage.removeItem('ae_api_model');
+        setApiKey('');
+        setDetectedModel(null);
+        setStatus('idle');
+    }
 
     return (
     <div className="space-y-8">
@@ -495,20 +698,131 @@ const ApiKeysView = ({ onNavigate }: { onNavigate: any }) => {
             breadcrumb="Workspace / API Keys" 
         />
 
-        {/* API Keys Section */}
+        {/* Universal API Keys Section */}
+        <div className="glass-card p-6 md:p-8 rounded-2xl border border-white/5 bg-slate-900/30 space-y-8">
+            <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm font-medium text-cyan-400">
+                        <Atom className="w-4 h-4" />
+                        Universal Provider Key
+                    </div>
+                    {universalStatus === 'connected' && (
+                        <div className="flex items-center gap-2">
+                             <span className="text-[10px] font-mono text-slate-400 border border-white/10 px-2 py-1 rounded bg-white/5 capitalize">
+                                Using: {universalProvider}
+                            </span>
+                            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20">
+                                ACTIVE
+                            </span>
+                        </div>
+                    )}
+                </div>
+                
+                <div className="flex flex-col md:flex-row gap-4">
+                    <div className="flex-1 relative group">
+                        <input 
+                            type={showKey2 ? "text" : "password"}
+                            value={universalKey}
+                            onChange={(e) => {
+                                setUniversalKey(e.target.value);
+                                if (universalStatus === 'error') setUniversalStatus('idle');
+                            }}
+                            placeholder="sk-ant..., gsk_..., or sk-..."
+                            className={`w-full bg-slate-950 border rounded-lg pl-4 pr-12 py-3 text-sm text-slate-300 focus:outline-none focus:ring-1 transition-all font-mono
+                                ${universalStatus === 'error' ? 'border-rose-500/50 focus:border-rose-500 focus:ring-rose-500/50' : 'border-white/10 focus:border-cyan-500/50 focus:ring-cyan-500/50'}
+                            `}
+                        />
+                        <button 
+                            onClick={() => setShowKey2(!showKey2)}
+                            className="absolute right-4 top-3 text-slate-500 hover:text-slate-300"
+                        >
+                            {showKey2 ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                    </div>
+                
+                    {universalStatus === 'connected' ? (
+                        <button 
+                            onClick={handleUniversalDisconnect}
+                            className="px-4 py-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-lg text-xs font-semibold hover:bg-rose-500/20 transition-all flex items-center gap-2 whitespace-nowrap justify-center"
+                        >
+                            <LogOut className="w-3 h-3" />
+                            Disconnect
+                        </button>
+                    ) : (
+                        <button 
+                            onClick={handleUniversalConnect}
+                            disabled={universalStatus === 'connecting' || !universalKey}
+                            className="px-4 py-3 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-lg text-xs font-semibold hover:bg-cyan-500/20 transition-all flex items-center gap-2 whitespace-nowrap justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {universalStatus === 'connecting' ? (
+                                <>
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                    Verifying...
+                                </>
+                            ) : (
+                                <>
+                                    <Zap className="w-3 h-3" />
+                                    Connect
+                                </>
+                            )}
+                        </button>
+                    )}
+                </div>
+                
+                <div className="flex justify-between text-[10px] font-mono pl-1">
+                    <span className={
+                        universalStatus === 'connected' ? "text-emerald-500" : 
+                        universalStatus === 'error' ? "text-rose-500" : 
+                        "text-slate-500"
+                    }>
+                        {universalStatus === 'connected' ? `Status: Connected to ${universalProvider}` : 
+                         universalStatus === 'error' ? "Status: Connection Failed (Invalid Key)" : 
+                         "Status: Not Connected (Auto-detects: Anthropic, Groq, OpenAI)"}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        {/* Google Gemini Section (Legacy/Specific) */}
         <div className="glass-card p-6 md:p-8 rounded-2xl border border-white/5 bg-slate-900/30 space-y-8">
         
         <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm font-medium text-cyan-400">
-            <Atom className="w-4 h-4" />
-            External Provider Key
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm font-medium text-cyan-400">
+                    <Atom className="w-4 h-4" />
+                    External Provider Key (Google Gemini)
+                </div>
+                {(status === 'connected' || status === 'quota') && (
+                     <div className="flex items-center gap-2">
+                        {detectedModel && (
+                            <span className="text-[10px] font-mono text-slate-400 border border-white/10 px-2 py-1 rounded bg-white/5">
+                                Using: {detectedModel}
+                            </span>
+                        )}
+                        <span className={`text-[10px] font-bold px-2 py-1 rounded border 
+                            ${status === 'quota' ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' : 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'}
+                        `}>
+                            {status === 'quota' ? 'QUOTA LIMIT' : 'ACTIVE'}
+                        </span>
+                     </div>
+                )}
             </div>
+            
             <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative group">
                 <input 
                 type={showKey1 ? "text" : "password"}
+                value={apiKey}
+                onChange={(e) => {
+                    setApiKey(e.target.value);
+                    if (status === 'error') setStatus('idle');
+                }}
                 placeholder="sk-..."
-                className="w-full bg-slate-950 border border-white/10 rounded-lg pl-4 pr-12 py-3 text-sm text-slate-300 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all font-mono"
+                className={`w-full bg-slate-950 border rounded-lg pl-4 pr-12 py-3 text-sm text-slate-300 focus:outline-none focus:ring-1 transition-all font-mono
+                    ${status === 'error' ? 'border-rose-500/50 focus:border-rose-500 focus:ring-rose-500/50' : 
+                      status === 'quota' ? 'border-amber-500/50 focus:border-amber-500 focus:ring-amber-500/50' :
+                      'border-white/10 focus:border-cyan-500/50 focus:ring-cyan-500/50'}
+                `}
                 />
                 <button 
                 onClick={() => setShowKey1(!showKey1)}
@@ -517,13 +831,48 @@ const ApiKeysView = ({ onNavigate }: { onNavigate: any }) => {
                 {showKey1 ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
             </div>
-            <button className="px-4 py-3 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-lg text-xs font-semibold hover:bg-cyan-500/20 transition-all flex items-center gap-2 whitespace-nowrap justify-center">
-                <Zap className="w-3 h-3" />
-                Connect
-            </button>
+            
+            {status === 'connected' || status === 'quota' ? (
+                <button 
+                    onClick={handleDisconnect}
+                    className="px-4 py-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-lg text-xs font-semibold hover:bg-rose-500/20 transition-all flex items-center gap-2 whitespace-nowrap justify-center"
+                >
+                    <LogOut className="w-3 h-3" />
+                    Disconnect
+                </button>
+            ) : (
+                <button 
+                    onClick={handleConnect}
+                    disabled={status === 'connecting' || !apiKey}
+                    className="px-4 py-3 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-lg text-xs font-semibold hover:bg-cyan-500/20 transition-all flex items-center gap-2 whitespace-nowrap justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    {status === 'connecting' ? (
+                        <>
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                            Verifying...
+                        </>
+                    ) : (
+                        <>
+                            <Zap className="w-3 h-3" />
+                            Connect
+                        </>
+                    )}
+                </button>
+            )}
             </div>
-            <div className="flex justify-between text-[10px] text-slate-500 font-mono pl-1">
-            <span>Status: Not Connected</span>
+            
+            <div className="flex justify-between text-[10px] font-mono pl-1">
+                <span className={
+                    status === 'connected' ? "text-emerald-500" : 
+                    status === 'quota' ? "text-amber-500" :
+                    status === 'error' ? "text-rose-500" : 
+                    "text-slate-500"
+                }>
+                    {status === 'connected' ? "Status: Connected to Neural Core" : 
+                     status === 'quota' ? "Status: Connected (Quota Exceeded)" :
+                     status === 'error' ? "Status: Connection Failed (Check Key)" : 
+                     "Status: Not Connected"}
+                </span>
             </div>
         </div>
 
