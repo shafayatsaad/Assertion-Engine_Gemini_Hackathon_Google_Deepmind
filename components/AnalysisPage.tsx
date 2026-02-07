@@ -15,7 +15,8 @@ import {
   Loader2,
   ChevronRight,
   Shield,
-  Target
+  Target,
+  Maximize2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../AppContext';
@@ -894,10 +895,10 @@ const VulnerabilityCard = ({ type, title, desc, riskScore, action, onClick }: an
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             onClick={onClick}
-            className={`p-5 rounded-2xl border transition-all hover:bg-white/[0.02] cursor-pointer ${
-                isCritical ? 'bg-indigo-500/[0.03] border-indigo-500/20' : 
-                isModerate ? 'bg-amber-500/[0.03] border-amber-500/20' : 
-                'bg-cyan-500/[0.03] border-cyan-500/20'
+            className={`p-5 rounded-2xl border transition-all hover:bg-white/[0.02] cursor-pointer group ${
+                isCritical ? 'bg-indigo-500/[0.03] border-indigo-500/20 hover:border-indigo-500/40' : 
+                isModerate ? 'bg-amber-500/[0.03] border-amber-500/20 hover:border-amber-500/40' : 
+                'bg-cyan-500/[0.03] border-cyan-500/20 hover:border-cyan-500/40'
             }`}
         >
             <div className="flex justify-between items-start mb-4">
@@ -911,22 +912,23 @@ const VulnerabilityCard = ({ type, title, desc, riskScore, action, onClick }: an
                 {isCritical ? <Database className="w-3.5 h-3.5 text-slate-600" /> : isModerate ? <Activity className="w-3.5 h-3.5 text-slate-600" /> : <Shield className="w-3.5 h-3.5 text-slate-600" />}
             </div>
             
-            <h4 className="text-white font-bold text-sm mb-2 uppercase tracking-wide">{title}</h4>
+            <h4 className="text-white font-bold text-sm mb-2 uppercase tracking-wide group-hover:text-indigo-300 transition-colors">{title}</h4>
             <p className="text-slate-400 text-xs leading-relaxed mb-6 line-clamp-3 font-mono">
                 {desc}
             </p>
             
             <div className="flex justify-between items-center mt-auto pt-4 border-t border-white/5">
                 <div className="flex flex-col">
-                    <span className="text-[8px] text-slate-500 uppercase font-mono">Risk: {riskScore}</span>
+                    <span className="text-[8px] text-slate-500 uppercase font-mono">Risk Impact</span>
+                    <span className="text-xs font-bold text-slate-300 font-mono">{riskScore}</span>
                 </div>
-                <button className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${
-                    isCritical ? 'text-indigo-400 hover:text-indigo-300' : 
-                    isModerate ? 'text-amber-400 hover:text-amber-300' : 
-                    'text-cyan-400 hover:text-cyan-300'
+                <div className={`p-1.5 rounded-lg transition-colors ${
+                     isCritical ? 'bg-indigo-500/10 text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white' : 
+                     isModerate ? 'bg-amber-500/10 text-amber-400 group-hover:bg-amber-500 group-hover:text-white' : 
+                     'bg-cyan-500/10 text-cyan-400 group-hover:bg-cyan-500 group-hover:text-white'
                 }`}>
-                    {action}
-                </button>
+                    <Maximize2 className="w-3.5 h-3.5" />
+                </div>
             </div>
         </motion.div>
     );
