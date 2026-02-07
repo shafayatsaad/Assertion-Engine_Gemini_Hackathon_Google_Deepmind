@@ -14,6 +14,8 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../AppContext';
 import { ProfileDropdown } from './ProfileDropdown';
+import { MobileNav } from './MobileNav';
+import { Menu } from 'lucide-react';
 import { callAI } from '../lib/ai';
 
 interface NoveltyPageProps {
@@ -27,6 +29,7 @@ export const NoveltyPage: React.FC<NoveltyPageProps> = ({ onNavigate }) => {
   const [selectedPaper, setSelectedPaper] = useState<any>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   const handleScan = async () => {
       if (!activeProject || isScanning) return;
@@ -137,6 +140,12 @@ export const NoveltyPage: React.FC<NoveltyPageProps> = ({ onNavigate }) => {
           </nav>
 
           <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setIsMobileNavOpen(true)}
+              className="p-2 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-white md:hidden"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
             <ProfileDropdown onNavigate={onNavigate} />
           </div>
         </div>
@@ -373,6 +382,12 @@ export const NoveltyPage: React.FC<NoveltyPageProps> = ({ onNavigate }) => {
         </div>
       </footer>
 
+      <MobileNav 
+        isOpen={isMobileNavOpen} 
+        onClose={() => setIsMobileNavOpen(false)} 
+        onNavigate={onNavigate}
+        currentPage="novelty"
+      />
     </div>
   );
 };
