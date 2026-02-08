@@ -266,25 +266,36 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
         `;
 
         const result = await callAI(scanPrompt, [], { responseMimeType: 'application/json' });
+        if (!result) throw new Error("Diagnostic Engine returned empty result.");
+        
         const data = JSON.parse(result);
+        
+        // Ensure we have arrays even if AI failed to provide them
+        const vulnerabilities = Array.isArray(data.vulnerabilities) ? data.vulnerabilities : [];
+        const roadmap = Array.isArray(data.roadmap) ? data.roadmap : [];
+        const scopeFocus = Array.isArray(data.scopeFocus) ? data.scopeFocus : [];
+        const scopeAbort = Array.isArray(data.scopeAbort) ? data.scopeAbort : [];
 
-        updateProject(activeProject.id, {
+        await updateProject(activeProject.id, {
             metrics: {
                 ...activeProject.metrics,
-                logicConsistency: data.logic / 100,
-                dataLineage: data.lineage / 100,
-                noveltyIndex: data.novelty / 100,
-                confidence: Math.round((data.logic + data.lineage + data.novelty) / 3),
-                radar: data.radar ? data.radar.join(',') : (activeProject.metrics?.radar || "50,50 50,50 50,50 50,50 50,50")
+                logicConsistency: (data.logic ?? 50) / 100,
+                dataLineage: (data.lineage ?? 50) / 100,
+                noveltyIndex: (data.novelty ?? 50) / 100,
+                confidence: Math.round(((data.logic ?? 50) + (data.lineage ?? 50) + (data.novelty ?? 50)) / 3),
+                radar: data.radar ? data.radar.join(',') : (activeProject.metrics?.radar || "50,50,50,50,50")
             },
-            vulnerabilities: data.vulnerabilities || [],
-            scopeFocus: data.scopeFocus || [],
-            scopeAbort: data.scopeAbort || [],
-            roadmap: data.roadmap || [],
-            progress: data.currentPhase !== undefined ? (data.currentPhase + 1) * 20 : activeProject.progress
+            vulnerabilities: vulnerabilities,
+            scopeFocus: scopeFocus,
+            scopeAbort: scopeAbort,
+            roadmap: roadmap,
+            progress: data.currentPhase !== undefined ? (data.currentPhase + 1) * 20 : Math.max(activeProject.progress, 20)
         });
 
         addLog({ module: 'Analysis', event: 'Deep Scan Complete.', status: 'success' });
+        
+        // Optional: Wait for state to propagate
+        await new Promise(res => setTimeout(res, 500));
         
         const aiMsg: Message = {
             id: Date.now().toString(),
