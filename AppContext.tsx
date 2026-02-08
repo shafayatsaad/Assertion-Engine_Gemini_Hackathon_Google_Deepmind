@@ -439,11 +439,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
 
     // Listen for auth changes
+    // Track the last user ID to prevent redundant reloads
+    let lastHandledUserId: string | null = null;
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('🔐 Auth State Change:', event, session?.user?.email);
         
+        // ONLY react to meaningful events
+        // Ignore TOKEN_REFRESHED, INITIAL_SESSION (handled by getSession above), and MFA events
+        if (event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION' || event === 'MFA_CHALLENGE_VERIFIED') {
+          console.log('ℹ️ Ignoring routine auth event:', event);
+          return;
+        }
+        
         if (event === 'SIGNED_IN' && session?.user) {
+          // Only process if this is a NEW user or first sign-in
+          if (lastHandledUserId === session.user.id) {
+            console.log('ℹ️ Ignoring duplicate SIGNED_IN for same user');
+            return;
+          }
+          lastHandledUserId = session.user.id;
+          
           // Optimistic update
           setUser({
             id: session.user.id,
@@ -453,6 +470,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           });
           await fetchUserProfile(session.user.id, session.user);
         } else if (event === 'SIGNED_OUT') {
+          lastHandledUserId = null;
           setUser(null);
           setProjects([]);
           setActiveProjectId(null);
@@ -857,6 +875,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const setActiveProject = (id: string) => {
     setActiveProjectId(id);
+    // Persist to localStorage for session restoration
+    localStorage.setItem('assertions_active_project_id', id);
   };
 
   const getActiveProject = () => projects.find(p => p.id === activeProjectId);
