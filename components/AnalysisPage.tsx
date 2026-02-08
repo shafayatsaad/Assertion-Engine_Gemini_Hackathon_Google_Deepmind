@@ -347,7 +347,7 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                 <button 
                     onClick={handleDeepScan}
                     disabled={isScanning}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all ${
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all ${
                         isScanning 
                         ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300' 
                         : 'bg-indigo-500/10 border-indigo-500/30 text-indigo-500 hover:bg-indigo-500/20'
@@ -358,9 +358,9 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                 </button>
                 <button 
                   onClick={() => setIsMobileNavOpen(true)}
-                  className="p-2 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-white md:hidden"
+                  className="p-2.5 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-white md:hidden"
                 >
-                  <Menu className="w-5 h-5" />
+                  <Menu className="w-6 h-6" />
                 </button>
                 <ProfileDropdown onNavigate={onNavigate} />
             </div>
