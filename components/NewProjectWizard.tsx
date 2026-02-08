@@ -257,7 +257,7 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
                   // Reset input value to allow re-uploading the same file if needed
                   e.target.value = '';
                 }}
-                accept=".pdf,.md,.txt,.tex"
+                accept=".pdf,application/pdf,.md,.txt,text/plain,.tex"
               />
               
               <AnimatePresence mode="wait">
@@ -294,7 +294,10 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
                         </div>
                         <div className="flex-1 min-w-0 text-left">
                             <h4 className="text-white font-medium truncate text-sm">{uploadedFile.name}</h4>
-                            <p className="text-slate-400 text-xs mt-0.5">{(uploadedFile.size / 1024).toFixed(1)} KB • Ready for Analysis</p>
+                            <p className={`text-xs mt-0.5 ${uploadProgress === 100 ? 'text-emerald-400' : 'text-slate-400'}`}>
+                                {uploadProgress === 100 ? 'Ready for Analysis' : 'Processing...'} 
+                                <span className="text-slate-500 ml-1">• {(uploadedFile.size / 1024).toFixed(1)} KB</span>
+                            </p>
                         </div>
                         <button 
                             onClick={handleRemoveFile}
