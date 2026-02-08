@@ -1,167 +1,181 @@
 <div align="center">
 
-<!-- ヘッダーバナー -->
-<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=12,14,19,20,24&height=200&section=header&text=Assertion%20Engine&fontSize=60&fontAlignY=35&animation=fadeIn&desc=AI駆動型学術研究検証プラットフォーム&descAlignY=55&descSize=18" width="100%" />
+# 🧪 Assertion Engine
 
-<!-- 言語切り替え -->
-<br/>
+**AI駆動型 学術研究検証プラットフォーム**
 
-[![英語版](https://img.shields.io/badge/🇺🇸_英語版-クリックして切替-64748B?style=for-the-badge&labelColor=1E293B)](./README.md)
-[![日本語版](https://img.shields.io/badge/🇯🇵_日本語版-現在表示中-10B981?style=for-the-badge&labelColor=1E293B)](./README_JP.md)
+[ 🇬🇧 English ](README.md) | [ 🇯🇵 日本語 ](README_JP.md)
 
-<br/>
+<br />
 
-<!-- テクノロジーバッジ -->
-![Gemini 3](https://img.shields.io/badge/Gemini_3-Google_DeepMind-4285F4?style=flat-square&logo=google&logoColor=white)
-![React](https://img.shields.io/badge/React-18.x-61DAFB?style=flat-square&logo=react&logoColor=black)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript&logoColor=white)
-![Supabase](https://img.shields.io/badge/Supabase-認証-3ECF8E?style=flat-square&logo=supabase&logoColor=white)
-![Vite](https://img.shields.io/badge/Vite-5.x-646CFF?style=flat-square&logo=vite&logoColor=white)
+[![Gemini 3](https://img.shields.io/badge/Gemini_3-Google_DeepMind-4285F4?style=flat-square&logo=google&logoColor=white)](https://gemini3.devpost.com/)
+[![React](https://img.shields.io/badge/React-18.x-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-認証-3ECF8E?style=flat-square&logo=supabase)](https://supabase.com/)
+[![Vite](https://img.shields.io/badge/Vite-5.x-646CFF?style=flat-square&logo=vite)](https://vitejs.dev/)
+[![License](https://img.shields.io/badge/ライセンス-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
-<br/>
+<p>
+  <b>Assertion Engine</b>は、研究者が時間・資金・評判を投資する前に<b>仮説をストレステスト</b>できる次世代の研究検証プラットフォームです。<b>Gemini 3 API</b>を活用し、論文を分析し、論理的脆弱性を特定し、新規性の衝突をスキャンし、具体的な改善案を提示します。
+</p>
 
-<!-- アクションボタン -->
-[![ライブデモ](https://img.shields.io/badge/🚀_ライブデモを見る-00C853?style=for-the-badge&labelColor=1E293B)](https://assertionengine.vercel.app/)
-[![ソースコード](https://img.shields.io/badge/📂_ソースコード-181717?style=for-the-badge&logo=github)](https://github.com/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind)
-[![ハッカソン](https://img.shields.io/badge/🏆_ハッカソン-8B5CF6?style=for-the-badge)](https://gemini3.devpost.com/)
+[🌐 ライブデモ](https://assertionengine.vercel.app/) · [バグ報告](https://github.com/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind/issues) · [機能リクエスト](https://github.com/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind/issues)
 
 </div>
 
 ---
 
-## 📋 目次
+## 💡 プロジェクトコンセプト
 
-- [🎯 概要](#-概要)
-- [🚨 問題提起](#-問題提起)
-- [✨ 機能一覧](#-機能一覧)
-- [🏗 システム構成](#-システム構成)
-- [🛠 使用技術](#-使用技術)
-- [🚀 セットアップ方法](#-セットアップ方法)
-- [📁 ディレクトリ構成](#-ディレクトリ構成)
-- [🎬 デモ](#-デモ)
-- [👤 開発者情報](#-開発者情報)
-- [📄 ライセンス](#-ライセンス)
+学術研究において、失敗はエラーメッセージとして現れません。**数ヶ月後**に査読者が欠陥を発見したり、**出版後**に先行研究が見つかることで失敗が明らかになります。
 
----
+**Assertion Engine**は、AI駆動の検証レイヤーを提供することでこの問題を解決します：
 
-## 🎯 概要
+1. **論理の検証**: Gemini 3を使用して仮説構造を分析し、論理的弱点を特定
+2. **新規性スキャン**: 公開前に類似度スコアリングで先行研究との衝突を検出
+3. **改善策の提示**: 特定されたギャップに基づいて方法論の改善を推奨
 
-**Assertion Engine**は、Google DeepMindが主催する**Gemini 3 ハッカソン**向けに構築された次世代の研究検証プラットフォームです。
+### 研究の基本原則
 
-研究者が時間、資金、評判を投資する前に、**仮説の妥当性を事前検証**することができます。
-
-**Gemini 3 API**を活用し、以下の機能を提供します：
-- 学術論文の分析
-- 論理的脆弱性の特定
-- 既存研究との重複チェック
-- 改善案の提示
-
-### 🔑 コアモジュール
-
-| モジュール名 | 機能説明 |
-|-------------|---------|
-| 🧠 **メンターAI** | 学術AIによる即時フィードバック |
-| 🔬 **標本ラボ** | 制御環境でのデータサンプル検証 |
-| ⚔️ **戦略デュエル** | 競合理論との方法論比較 |
-| 📊 **新規性スキャナー** | 公開前の先行研究衝突検出 |
+- 🎯 **検証ファースト**: 数ヶ月の研究に投資する前にテスト
+- 🔬 **統計的厳密性**: 最先端言語モデルによるAI分析
+- 💡 **実行可能な洞察**: 一般的なフィードバックではなく、具体的な推奨事項
 
 ---
 
-## 🚨 問題提起
+## 🚀 主な機能
 
-学術研究者が直面する重大な課題：
+### 🧠 メンターAI — インテリジェントフィードバックエンジン
 
-| 課題 | 具体的な影響 |
-|------|------------|
-| ❌ **リソースの浪費** | 欠陥のある仮説に数ヶ月の時間を費やす |
-| ❌ **評判の毀損** | 容易に反論される主張を公開してしまう |
-| ❌ **新規性の問題** | 出版後に類似の先行研究が発覚する |
-| ❌ **論理的欠陥** | 方法論上の問題が見過ごされる |
+- **リアルタイム分析**: 仮説を送信して即座にAIフィードバックを取得
+- **論理的弱点の検出**: ギャップ、仮定、潜在的な反論を特定
+- **改善提案**: 研究を強化するための具体的な推奨事項を提供
 
-> **従来の手動検証は時間がかかり、ミスも発生しやすい。**
-> 
-> Assertion Engineは検証プロセスを自動化し、時間を節約し、研究の質を向上させます。
+### 🔬 標本ラボ — データテスト環境
+
+- **制御されたシミュレーション**: 方法論に対してデータサンプルをテスト
+- **履歴比較**: 既存データセットに基づいて結果をシミュレート
+- **リスク評価**: データ関連の問題を問題になる前に特定
+
+### 📊 新規性スキャナー — 先行研究検出
+
+- **類似度スコアリング**: 既存研究との重複を数値化（0-100%リスクスコア）
+- **ソース特定**: あなたの研究と衝突する論文を正確に表示
+- **差別化分析**: あなたの研究をユニークにする要素を強調
+
+### ⚔️ 戦略デュエル — 方法論ストレステスト
+
+- **競合分析**: 方法論を競合理論と対決させる
+- **討論シミュレーション**: AIが反論を生成して弱点を発見
+- **強み評価**: 代替案と比較してどこで優れているかを理解
+
+### 🔐 セキュア認証
+
+- **Supabase認証**: メール確認付きの安全なログイン・登録
+- **プロジェクト管理**: 研究検証の保存・追跡・再訪問
+- **ユーザープロフィール**: 所属機関付きのカスタマイズ可能なプロフィール
 
 ---
 
-## ✨ 機能一覧
+## 💻 コードスポットライト
 
-| 機能名 | 機能説明 |
-|-------|---------|
-| 🔐 **ユーザー認証** | Supabaseによる安全なログイン・登録 |
-| 📝 **プロジェクト管理** | 研究プロジェクトの作成・管理・追跡 |
-| 🧠 **AI分析** | Gemini 3によるAI駆動の仮説検証 |
-| 🔬 **標本ラボ** | 対話型データサンプルテスト環境 |
-| 📊 **新規性スキャン** | 類似度スコアによる先行研究検出 |
-| ⚔️ **戦略デュエル** | 競合理論との方法論ストレステスト |
-| 📈 **リアルタイム指標** | 信頼度・論理一貫性・新規性スコア |
-| 🎨 **高品質UI** | 滑らかなアニメーション付きモダンデザイン |
+Assertion EngineはGemini 3 APIを使用してAI検証エンジンを動かしています。新規性分析ロジックのスニペット：
 
----
+```typescript
+// lib/gemini.ts - 新規性分析
 
-## 🏗 システム構成
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                           フロントエンド                                  │
-│                    React + TypeScript + Vite                            │
-│         トップページ │ ダッシュボード │ 分析画面 │ 新規性スキャナー         │
-└───────────────────────────────────┬─────────────────────────────────────┘
-                                    │
-                    ┌───────────────┼───────────────┐
-                    │               │               │
-                    ▼               ▼               ▼
-┌───────────────────────┐ ┌─────────────────┐ ┌─────────────────────┐
-│    Supabase 認証      │ │  Supabase DB    │ │   Gemini 3 API      │
-│                       │ │                 │ │                     │
-│ • ユーザー管理        │ │ • ユーザー情報   │ │ • 仮説の検証         │
-│ • 認証トークン        │ │ • プロジェクト   │ │ • 新規性の分析       │
-│ • セッション管理      │ │ • 分析結果       │ │ • リスク評価         │
-└───────────────────────┘ └─────────────────┘ └─────────────────────┘
+const analyzeNovelty = async (abstract: string, fullDocument?: string) => {
+  const prompt = `
+    あなたは厳格な学術新規性評価者です。
+    
+    以下の研究を分析してください：
+    1. 先行研究との衝突（0-100%リスクスコア）
+    2. 既存研究との主な差別化要素
+    3. 衝突する可能性のある具体的な論文
+    
+    研究に以下のようなユニークな要素が含まれている場合：
+    - 新規の数学モデル
+    - 独自のアーキテクチャアプローチ
+    - オリジナルのデータセットや方法論
+    
+    リスクスコアを大幅に下げてください。
+    
+    アブストラクト: ${abstract}
+    ${fullDocument ? `全文ドキュメント: ${fullDocument}` : ''}
+  `;
+  
+  const response = await gemini.generateContent(prompt);
+  return parseNoveltyResponse(response);
+};
 ```
 
 ---
 
-## 🛠 使用技術
+## 🏗️ デモシナリオ
 
-| カテゴリ | 技術名 | 用途 |
-|---------|--------|------|
-| **画面** | React 18 + TypeScript | コンポーネントベースのUI構築 |
-| **ビルド** | Vite 5 | 高速な開発環境・本番ビルド |
-| **デザイン** | Tailwind CSS + 独自CSS | モダンなレスポンシブデザイン |
-| **アニメーション** | Framer Motion | 滑らかな画面遷移・効果 |
-| **認証・DB** | Supabase | ユーザー認証とPostgreSQLデータベース |
-| **AI** | Google Gemini 3 API | 仮説検証と分析エンジン |
-| **公開** | Vercel | グローバルCDNによる高速配信 |
+プラットフォームはさまざまな研究検証シナリオをサポートしています：
+
+| シナリオ | 説明 | ユースケース |
+| :--- | :--- | :--- |
+| **クイックスキャン** | アブストラクトのみの分析 | 初期段階の仮説検証 |
+| **ディープ分析** | 全文 + アブストラクト | 投稿前レビュー |
+| **新規性チェック** | 先行研究衝突検出 | 特許/出版準備 |
+| **戦略レビュー** | 方法論ストレステスト | 学位論文提案の防衛 |
 
 ---
 
-## 🚀 セットアップ方法
+## 📁 プロジェクト構成
 
-### 必要な環境
+```bash
+assertion-engine/
+├── components/           # React UIコンポーネント
+│   ├── Hero.tsx          # ランディングページのヒーローセクション
+│   ├── Dashboard.tsx     # メインダッシュボード
+│   ├── AnalysisPage.tsx  # AI分析インターフェース
+│   ├── NoveltyPage.tsx   # 新規性スキャナー
+│   ├── SpecimenLab.tsx   # 標本ラボ
+│   ├── Navbar.tsx        # ナビゲーション
+│   └── ProfileDropdown.tsx # ユーザーメニュー
+├── lib/                  # ユーティリティとAPI
+│   ├── supabase.ts       # Supabase接続設定
+│   └── gemini.ts         # Gemini API連携
+├── App.tsx               # メインルーターとレイアウト
+├── AppContext.tsx        # グローバル状態管理
+├── index.css             # グローバルスタイル
+├── index.html            # HTMLエントリーポイント
+└── vite.config.ts        # Vite設定
+```
 
-- Node.js（バージョン18以上）
+---
+
+## 🏁 セットアップ方法
+
+### 前提条件
+
+- Node.js 18以上
 - npm または yarn
 - Supabaseアカウント
 - Google Gemini APIキー
 
-### インストール手順
+### 1. クローンとインストール
 
 ```bash
-# 1. リポジトリをダウンロード
+# リポジトリをクローン
 git clone https://github.com/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind.git
 cd Assertion-Engine_Gemini_Hackathon_Google_Deepmind
 
-# 2. 必要なパッケージをインストール
+# 依存関係をインストール
 npm install
+```
 
-# 3. 設定ファイルを作成
+### 2. 環境設定
+
+```bash
+# 環境テンプレートをコピー
 cp .env.example .env.local
 ```
 
-### 環境変数の設定
-
-`.env.local` ファイルを編集してください：
+`.env.local`を編集：
 
 ```env
 VITE_SUPABASE_URL=あなたのSupabase_URL
@@ -169,70 +183,68 @@ VITE_SUPABASE_ANON_KEY=あなたのSupabase匿名キー
 VITE_GEMINI_API_KEY=あなたのGemini_APIキー
 ```
 
-### 開発サーバーの起動
+### 3. 開発サーバーを起動
 
 ```bash
-# 開発モードで起動
 npm run dev
+```
 
-# 本番用にビルド
+_ダッシュボードは `http://localhost:5173` で起動します_
+
+### 4. 本番ビルド
+
+```bash
 npm run build
-
-# ビルド結果をプレビュー
 npm run preview
 ```
 
 ---
 
-## 📁 ディレクトリ構成
-
-```
-assertion-engine/
-├── components/
-│   ├── Hero.tsx              # トップページのヒーローセクション
-│   ├── Navbar.tsx            # ナビゲーションバー
-│   ├── Dashboard.tsx         # メインダッシュボード
-│   ├── AnalysisPage.tsx      # AI分析画面
-│   ├── NoveltyPage.tsx       # 新規性スキャナー
-│   ├── SpecimenLab.tsx       # 標本ラボ
-│   └── ...                   # その他のコンポーネント
-├── lib/
-│   ├── supabase.ts           # Supabase接続設定
-│   └── gemini.ts             # Gemini API連携
-├── App.tsx                   # メインルーター
-├── AppContext.tsx            # グローバル状態管理
-├── index.css                 # 共通スタイル
-└── package.json              # 依存関係定義
-```
-
----
-
-## 🎬 デモ
+## 🏆 ハッカソン
 
 <div align="center">
 
-[![デモを試す](https://img.shields.io/badge/🚀_今すぐ試す-10B981?style=for-the-badge&labelColor=1E293B)](https://assertionengine.vercel.app/)
+[![Gemini 3 ハッカソン](https://img.shields.io/badge/Google_DeepMind-Gemini_3_ハッカソン-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://gemini3.devpost.com/)
 
 </div>
 
-### 使い方の流れ
+このプロジェクトは**Google DeepMind**主催の**Gemini 3 ハッカソン**のために構築されました。
 
-1. **アカウント作成** — メールアドレスで登録
-2. **プロジェクト作成** — 研究仮説を入力
-3. **AI分析を実行** — 即座にフィードバックを取得
-4. **新規性スキャン** — 先行研究との衝突を確認
-5. **結果を確認** — 信頼度スコアを表示
+| 項目 | 詳細 |
+|------|------|
+| **イベント** | Gemini 3 ハッカソン: Build What's Next |
+| **主催** | Google DeepMind |
+| **賞金総額** | $100,000（約1,500万円） |
+| **テーマ** | 機械学習 / AI、自由課題、社会貢献 |
 
 ---
 
-## 👤 開発者情報
+## 🤝 コントリビューション
+
+AI分析精度の向上や新しい検証モジュールの追加への貢献を歓迎します！
+
+1. プロジェクトをフォーク
+2. 機能ブランチを作成 (`git checkout -b feature/新しい分析機能`)
+3. 変更をコミット (`git commit -m '新しい検証モジュールを追加'`)
+4. ブランチにプッシュ (`git push origin feature/新しい分析機能`)
+5. プルリクエストを作成
+
+---
+
+## 📄 ライセンス
+
+MITライセンスの下で配布されています。詳細は`LICENSE`を参照してください。
+
+---
+
+## 👤 メンテナー
 
 <div align="center">
 <table>
 <tr>
 <td align="center">
   <a href="https://github.com/shafayatsaad">
-    <img src="https://github.com/shafayatsaad.png" width="120px" style="border-radius: 50%;" alt="Shafayat Saad"/>
+    <img src="https://github.com/shafayatsaad.png" width="100px" style="border-radius: 50%;" alt="Shafayat Saad"/>
     <br />
     <strong>Shafayat Saad</strong>
   </a>
@@ -240,16 +252,16 @@ assertion-engine/
   <sub>フルスタックエンジニア</sub>
   <br /><br />
   <a href="https://github.com/shafayatsaad">
-    <img src="https://img.shields.io/badge/GitHub-181717?style=flat-square&logo=github&logoColor=white" alt="GitHub" />
+    <img src="https://img.shields.io/badge/GitHub-181717?style=flat-square&logo=github&logoColor=white" />
   </a>
   <a href="https://www.linkedin.com/in/shafayatsaad/">
-    <img src="https://img.shields.io/badge/LinkedIn-0A66C2?style=flat-square&logo=linkedin&logoColor=white" alt="LinkedIn" />
+    <img src="https://img.shields.io/badge/LinkedIn-0A66C2?style=flat-square&logo=linkedin&logoColor=white" />
   </a>
   <a href="https://shafayatsaad.vercel.app/">
-    <img src="https://img.shields.io/badge/ポートフォリオ-000?style=flat-square&logo=vercel&logoColor=white" alt="ポートフォリオ" />
+    <img src="https://img.shields.io/badge/ポートフォリオ-000?style=flat-square&logo=vercel&logoColor=white" />
   </a>
   <a href="mailto:shafayat.saad30@gmail.com">
-    <img src="https://img.shields.io/badge/メール-EA4335?style=flat-square&logo=gmail&logoColor=white" alt="メール" />
+    <img src="https://img.shields.io/badge/メール-EA4335?style=flat-square&logo=gmail&logoColor=white" />
   </a>
 </td>
 </tr>
@@ -258,34 +270,7 @@ assertion-engine/
 
 ---
 
-## 🏆 ハッカソン情報
-
 <div align="center">
-
-[![Gemini 3 ハッカソン](https://img.shields.io/badge/Google_DeepMind-Gemini_3_ハッカソン-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://gemini3.devpost.com/)
-
-</div>
-
-このプロジェクトは**Google DeepMind**主催の**Gemini 3 ハッカソン**のために開発されました。
-
-| 項目 | 内容 |
-|------|------|
-| **イベント名** | Gemini 3 ハッカソン: Build What's Next |
-| **主催者** | Google DeepMind |
-| **賞金総額** | $100,000（約1,500万円） |
-| **テーマ** | 機械学習・AI、自由課題、社会貢献 |
-
----
-
-## 📄 ライセンス
-
-このプロジェクトは**MITライセンス**の下で公開されています。
-
----
-
-<div align="center">
-
-<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=12,14,19,20,24&height=100&section=footer" width="100%" />
 
 **Gemini 3 ハッカソンのために❤️を込めて開発**
 
