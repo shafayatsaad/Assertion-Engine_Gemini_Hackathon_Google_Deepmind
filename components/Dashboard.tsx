@@ -276,6 +276,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                             <th className="px-6 py-4">Project</th>
                             <th className="px-6 py-4">Status</th>
                             <th className="px-6 py-4 text-right">Updated</th>
+                            <th className="px-6 py-4 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5 text-sm">
@@ -290,10 +291,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                                     />
                                 </td>
                                 <td className="px-6 py-4 text-slate-500 text-right font-mono">{new Date(p.updated).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
+                                <td className="px-6 py-4 text-right">
+                                    <button 
+                                        onClick={async (e) => {
+                                            e.stopPropagation();
+                                            if(confirm(`Delete project "${p.title}"?`)) {
+                                                await deleteProject(p.id);
+                                            }
+                                        }}
+                                        className="p-2 rounded-lg hover:bg-rose-500/10 text-slate-500 hover:text-rose-500 transition-colors"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </td>
                             </tr>
                         )) : (
                             <tr>
-                                <td colSpan={4} className="px-6 py-8 text-center text-slate-500">No executions yet.</td>
+                                <td colSpan={5} className="px-6 py-8 text-center text-slate-500">No executions yet.</td>
                             </tr>
                         )}
                     </tbody>
