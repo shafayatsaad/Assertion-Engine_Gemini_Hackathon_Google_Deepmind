@@ -497,8 +497,6 @@ export const AnalysisPage: React.FC<AnalysisPageProps> = ({ onNavigate }) => {
                 <nav className="flex items-center text-sm font-medium text-slate-500 relative z-20">
                     <button onClick={() => onNavigate('dashboard')} className="hover:text-white transition-colors">Dashboard</button>
                     <ChevronRight className="w-4 h-4 mx-2 text-slate-700" />
-                    <button onClick={() => onNavigate('new-project')} className="hover:text-white transition-colors">Project</button>
-                    <ChevronRight className="w-4 h-4 mx-2 text-slate-700" />
                     <span className="text-indigo-500">Analysis</span>
                 </nav>
 
