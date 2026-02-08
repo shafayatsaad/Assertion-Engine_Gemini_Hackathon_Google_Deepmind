@@ -75,6 +75,9 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
 
   const handleFileUpload = async (file: File) => {
     console.log('📂 handleFileUpload called with file:', file.name, file.type, file.size);
+    
+    // IMMEDIATE UI UPDATE
+    setUploadedFile(file);
     setIsUploading(true);
     setUploadProgress(10);
     addLog({ module: 'Intake', event: `Reading ${file.name}...`, status: 'info' });
@@ -89,6 +92,7 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
             } catch (pdfError) {
                 console.warn("PDF specific extraction failed", pdfError);
                 content = `[PDF Content Extraction Failed]`;
+                addLog({ module: 'Intake', event: `PDF extraction failed for ${file.name}`, status: 'error' });
             }
         } else {
             // Handle text files
@@ -127,26 +131,31 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
                 ${content.slice(0, 4000)}
             `;
 
-            const result = await callAI(extractPrompt, [], { responseMimeType: 'application/json' });
             try {
+                const result = await callAI(extractPrompt, [], { responseMimeType: 'application/json' });
                 const cleaned = result.replace(/```json/g, '').replace(/```/g, '').trim();
                 const data = JSON.parse(cleaned);
                 if (data.hypothesis) setHypothesis(data.hypothesis);
                 if (data.assumptions) setAssumptions(data.assumptions);
                 if (data.metrics) setInitialMetrics(data.metrics);
+                setUploadProgress(100);
+                addLog({ module: 'Intake', event: `${file.name} analyzed successfully.`, status: 'success' });
             } catch (e) {
                 console.warn("AI extraction failed, using fallback.", e);
+                setUploadProgress(100); // Still mark as complete even if AI fails, so user can proceed
+                addLog({ module: 'Intake', event: `AI analysis failed, but file loaded.`, status: 'warning' });
             }
+        } else {
+             setUploadProgress(100);
         }
 
         if (!title) setTitle(file.name.split('.')[0]);
-        setUploadedFile(file);
-        setUploadProgress(100);
-        addLog({ module: 'Intake', event: `${file.name} processed successfully.`, status: 'success' });
 
     } catch (error) {
         console.error("File processing error:", error);
         addLog({ module: 'Intake', event: `Failed to process ${file.name}`, status: 'error' });
+        // We do NOT clear uploadedFile here, so the user sees the error state on the card
+        setUploadProgress(0); // Reset or set to -1 for error state if desired
     } finally {
         setIsUploading(false);
     }
@@ -286,33 +295,38 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="flex flex-col items-center z-20 w-full px-6"
+                    className="flex flex-col items-center z-20 w-full px-4 md:px-6 relative"
                   >
-                    <div className="flex items-center gap-4 bg-slate-900/80 border border-emerald-500/30 p-4 rounded-xl w-full max-w-md backdrop-blur-sm shadow-lg shadow-emerald-500/10">
-                        <div className="p-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                    <div className="flex items-center gap-4 bg-slate-900 border border-emerald-500/30 p-4 rounded-xl w-full max-w-md shadow-lg shadow-emerald-500/10">
+                        <div className="p-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20 shrink-0">
                             <FileText className="w-6 h-6 text-emerald-400" />
                         </div>
                         <div className="flex-1 min-w-0 text-left">
                             <h4 className="text-white font-medium truncate text-sm">{uploadedFile.name}</h4>
-                            <p className={`text-xs mt-0.5 ${uploadProgress === 100 ? 'text-emerald-400' : 'text-slate-400'}`}>
-                                {uploadProgress === 100 ? 'Ready for Analysis' : 'Processing...'} 
+                            <p className={`text-xs mt-0.5 ${uploadProgress === 100 ? 'text-emerald-400' : uploadProgress === 0 ? 'text-rose-400' : 'text-indigo-400'}`}>
+                                {uploadProgress === 100 ? 'Ready for Analysis' : uploadProgress === 0 ? 'Upload Error' : 'Processing...'} 
                                 <span className="text-slate-500 ml-1">• {(uploadedFile.size / 1024).toFixed(1)} KB</span>
                             </p>
                         </div>
                         <button 
+                            type="button"
                             onClick={handleRemoveFile}
-                            className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-colors"
+                            // Increased touch target for mobile
+                            className="p-3 -mr-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
                         >
                             <X className="w-5 h-5" />
                         </button>
                     </div>
-                    <div className="mt-4 flex flex-col items-center">
-                         <div className="flex items-center gap-2 text-emerald-400 text-xs font-mono uppercase tracking-wider mb-2">
-                            <CheckCircle2 className="w-3 h-3" />
-                            Extraction Complete
-                         </div>
-                         <p className="text-slate-500 text-xs">Review the manifest below before proceeding.</p>
-                    </div>
+                    
+                    {uploadProgress === 100 && (
+                        <div className="mt-4 flex flex-col items-center">
+                             <div className="flex items-center gap-2 text-emerald-400 text-xs font-mono uppercase tracking-wider mb-2">
+                                <CheckCircle2 className="w-3 h-3" />
+                                Extraction Complete
+                             </div>
+                             <p className="text-slate-500 text-xs text-center">Review the manifest below before proceeding.</p>
+                        </div>
+                    )}
                   </motion.div>
                 ) : (
                   <motion.div 
