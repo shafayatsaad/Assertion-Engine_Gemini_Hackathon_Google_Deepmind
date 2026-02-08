@@ -130,7 +130,7 @@ const MainApp = () => {
     const validPages: Page[] = ['landing', 'signin', 'signup', 'profile', 'settings', 'dashboard', 'newproject', 'library', 'specimens', 'analysis', 'novelty'];
     return (saved && validPages.includes(saved as Page)) ? (saved as Page) : 'landing';
   });
-  const { user, activeProjectId, projects, setActiveProject } = useApp();
+  const { user, isLoading, activeProjectId, projects, setActiveProject } = useApp();
 
   const handleNavigate = (page: Page) => {
     setCurrentPage(page);
@@ -140,10 +140,21 @@ const MainApp = () => {
 
   // Redirect to dashboard if logged in and on landing/auth pages
   useEffect(() => {
-    if (user && (currentPage === 'landing' || currentPage === 'signin' || currentPage === 'signup')) {
+    if (!isLoading && user && (currentPage === 'landing' || currentPage === 'signin' || currentPage === 'signup')) {
       handleNavigate('dashboard');
     }
-  }, [user, currentPage]);
+  }, [user, currentPage, isLoading]);
+
+  // PROTECTED ROUTES: Redirect to landing/signin if NOT logged in and accessing private pages
+  useEffect(() => {
+      if (isLoading) return; // Wait for auth to settle
+
+      const publicPages: Page[] = ['landing', 'signin', 'signup'];
+      if (!user && !publicPages.includes(currentPage)) {
+          console.warn('🔒 Unauthorized access to', currentPage, '- Redirecting to Landing');
+          handleNavigate('landing');
+      }
+  }, [user, currentPage, isLoading]);
 
   // Safety: If on analysis page but no project selected, go to dashboard
   // Safety: If on analysis/novelty page but no project selected, try to restore or redirect
