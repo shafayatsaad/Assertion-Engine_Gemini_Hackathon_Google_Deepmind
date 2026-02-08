@@ -1,38 +1,31 @@
-<p align="center">
-  <img src="https://img.shields.io/badge/Gemini_3-Google_DeepMind-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Gemini 3" />
-  <img src="https://img.shields.io/badge/React-18.x-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React" />
-  <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/Supabase-Auth-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" />
-  <img src="https://img.shields.io/badge/Vite-5.x-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" />
-</p>
+<div align="center">
+
+<!-- ヘッダーバナー -->
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=12,14,19,20,24&height=200&section=header&text=Assertion%20Engine&fontSize=60&fontAlignY=35&animation=fadeIn&desc=AI駆動型学術研究検証プラットフォーム&descAlignY=55&descSize=18" width="100%" />
 
 <!-- 言語切り替え -->
-<p align="center">
-  <a href="./README.md"><img src="https://img.shields.io/badge/🇺🇸_English-切替-64748B?style=for-the-badge" alt="English" /></a>
-  <a href="./README_JP.md"><img src="https://img.shields.io/badge/🇯🇵_日本語-選択中-10B981?style=for-the-badge" alt="Japanese" /></a>
-</p>
+<br/>
 
----
+[![English](https://img.shields.io/badge/🇺🇸_English-CLICK_TO_SWITCH-64748B?style=for-the-badge&labelColor=1E293B)](./README.md)
+[![日本語](https://img.shields.io/badge/🇯🇵_日本語-選択中-10B981?style=for-the-badge&labelColor=1E293B)](./README_JP.md)
 
-<h1 align="center">
-  🧪 Assertion Engine 🧪
-</h1>
+<br/>
 
-<p align="center">
-  <strong>AI駆動型学術研究検証プラットフォーム</strong>
-</p>
+<!-- テクノロジーバッジ -->
+[![Gemini 3](https://img.shields.io/badge/Gemini_3-Google_DeepMind-4285F4?style=flat-square&logo=google&logoColor=white)](https://gemini3.devpost.com/)
+[![React](https://img.shields.io/badge/React-18.x-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-Auth-3ECF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com/)
+[![Vite](https://img.shields.io/badge/Vite-5.x-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
 
-<p align="center">
-  <a href="https://assertionengine.vercel.app/">
-    <img src="https://img.shields.io/badge/🌐_ライブデモ-assertionengine.vercel.app-00C853?style=for-the-badge" alt="ライブデモ" />
-  </a>
-  <a href="https://github.com/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind">
-    <img src="https://img.shields.io/badge/📂_GitHub-リポジトリ-181717?style=for-the-badge&logo=github" alt="GitHub" />
-  </a>
-  <a href="https://gemini3.devpost.com/">
-    <img src="https://img.shields.io/badge/🏆_ハッカソン-Gemini_3-8B5CF6?style=for-the-badge" alt="Devpost" />
-  </a>
-</p>
+<br/>
+
+<!-- アクションボタン -->
+[![ライブデモ](https://img.shields.io/badge/🚀_ライブデモ-assertionengine.vercel.app-00C853?style=for-the-badge&labelColor=1E293B)](https://assertionengine.vercel.app/)
+[![GitHub](https://img.shields.io/badge/📂_ソースコード-GitHub-181717?style=for-the-badge&logo=github)](https://github.com/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind)
+[![ハッカソン](https://img.shields.io/badge/🏆_ハッカソン-Gemini_3-8B5CF6?style=for-the-badge)](https://gemini3.devpost.com/)
+
+</div>
 
 ---
 
@@ -57,12 +50,14 @@
 
 **Gemini 3 API**の力を活用し、学術論文を分析し、論理的な脆弱性を特定し、新規性の衝突をスキャンし、実行可能なピボット推奨を提供します。
 
-### 主な機能
+### 🔑 主な機能
 
-- 🧠 **メンターAI** — 学術AIコアからの即時フィードバック
-- 🔬 **標本ラボ** — 制御された環境でデータサンプルをテスト
-- ⚔️ **戦略デュエル** — 方法論を競合する理論と対決させる
-- 📊 **新規性スキャナー** — 公開前に先行技術の衝突を検出
+| モジュール | 説明 |
+|-----------|------|
+| 🧠 **メンターAI** | 学術AIコアからの即時フィードバック |
+| 🔬 **標本ラボ** | 制御された環境でデータサンプルをテスト |
+| ⚔️ **戦略デュエル** | 方法論を競合する理論と対決させる |
+| 📊 **新規性スキャナー** | 公開前に先行技術の衝突を検出 |
 
 ---
 
@@ -70,12 +65,14 @@
 
 学術研究者は重大な課題に直面しています：
 
-- ❌ **リソースの無駄** — 欠陥のある仮説に数ヶ月の作業
-- ❌ **評判の損傷** — 簡単に反論できる主張の公開
-- ❌ **新規性の衝突** — 出版後に発見される未知の先行技術
-- ❌ **論理のギャップ** — 方法論で検出されない欠陥
+| 問題 | 影響 |
+|------|------|
+| ❌ **リソースの無駄** | 欠陥のある仮説に数ヶ月の作業 |
+| ❌ **評判の損傷** | 簡単に反論できる主張の公開 |
+| ❌ **新規性の衝突** | 出版後に発見される未知の先行技術 |
+| ❌ **論理のギャップ** | 方法論で検出されない欠陥 |
 
-**手動検証は時間がかかり、エラーが発生しやすい。** Assertion Engineは検証パイプラインを自動化し、時間を節約し、評判を保護し、公開された研究の質を向上させます。
+> **手動検証は時間がかかり、エラーが発生しやすい。** Assertion Engineは検証パイプラインを自動化し、時間を節約し、評判を保護し、公開された研究の質を向上させます。
 
 ---
 
@@ -204,11 +201,11 @@ assertion-engine/
 
 ## 🎬 デモ
 
-<p align="center">
-  <a href="https://assertionengine.vercel.app/">
-    <img src="https://img.shields.io/badge/🚀_ライブデモを試す-assertionengine.vercel.app-10B981?style=for-the-badge&labelColor=1E293B" alt="デモを試す" />
-  </a>
-</p>
+<div align="center">
+
+[![デモを試す](https://img.shields.io/badge/🚀_ライブデモを試す-assertionengine.vercel.app-10B981?style=for-the-badge&labelColor=1E293B)](https://assertionengine.vercel.app/)
+
+</div>
 
 ### デモワークフロー
 
@@ -222,6 +219,7 @@ assertion-engine/
 
 ## 👤 開発者
 
+<div align="center">
 <table>
 <tr>
 <td align="center">
@@ -248,14 +246,17 @@ assertion-engine/
 </td>
 </tr>
 </table>
+</div>
 
 ---
 
 ## 🏆 ハッカソン
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Google_DeepMind-Gemini_3_ハッカソン-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Gemini 3 ハッカソン" />
-</p>
+<div align="center">
+
+[![Gemini 3 ハッカソン](https://img.shields.io/badge/Google_DeepMind-Gemini_3_ハッカソン-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://gemini3.devpost.com/)
+
+</div>
 
 このプロジェクトは**Google DeepMind**が主催する**Gemini 3 ハッカソン**のために構築されました。
 
@@ -274,12 +275,12 @@ assertion-engine/
 
 ---
 
-<p align="center">
-  <sub>Gemini 3 ハッカソンのために❤️を込めて制作</sub>
-</p>
+<div align="center">
 
-<p align="center">
-  <a href="https://assertionengine.vercel.app/">
-    <img src="https://img.shields.io/badge/🌐_ウェブサイトを訪問-assertionengine.vercel.app-10B981?style=for-the-badge" alt="ウェブサイト" />
-  </a>
-</p>
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=12,14,19,20,24&height=100&section=footer" width="100%" />
+
+Gemini 3 ハッカソンのために❤️を込めて制作
+
+[![ウェブサイト](https://img.shields.io/badge/🌐_ウェブサイトを訪問-assertionengine.vercel.app-10B981?style=for-the-badge)](https://assertionengine.vercel.app/)
+
+</div>
