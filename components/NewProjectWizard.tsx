@@ -26,10 +26,8 @@ interface NewProjectWizardProps {
 
 export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }) => {
   const [title, setTitle] = useState('');
-  const [assumptions, setAssumptions] = useState([
-    'Closed System', 'Infinite Compute', 'Static Dataset'
-  ]);
-  const [hypothesis, setHypothesis] = useState("Developing a sub-linear time complexity algorithm for multi-agent pathfinding in non-Euclidean space using quantum-inspired heuristics.");
+  const [assumptions, setAssumptions] = useState<string[]>([]);
+  const [hypothesis, setHypothesis] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [fullContent, setFullContent] = useState('');
@@ -51,7 +49,28 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
   };
 
   const extractPdfText = async (file: File): Promise<string> => {
-    const pdfjsLib = (window as any).pdfjsLib;
+    // Ensure PDF.js is loaded
+    let pdfjsLib = (window as any).pdfjsLib;
+    if (!pdfjsLib) {
+        console.warn("pdfjsLib not found on window, attempting to load from CDN...");
+        try {
+            await new Promise<void>((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+                script.onload = () => {
+                     (window as any).pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                     resolve();
+                };
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+            pdfjsLib = (window as any).pdfjsLib;
+        } catch (e) {
+             console.error("Failed to load PDF.js", e);
+             return `[PDF Engine Load Failed]`;
+        }
+    }
+    
     if (!pdfjsLib) return `[PDF extraction unavailable: pdfjsLib not loaded]`;
     
     try {
@@ -169,7 +188,7 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
       title: title || "New Research Initiative " + new Date().toLocaleDateString(),
       hypothesis: hypothesis,
       assumptions: assumptions,
-      fullContent: fullContent,
+      fullContent: fullContent || `[Manual Upload: ${uploadedFile?.name}]`,
       status: "ANALYZING",
       progress: 0,
       metrics: {
