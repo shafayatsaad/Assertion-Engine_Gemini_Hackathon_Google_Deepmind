@@ -8,13 +8,20 @@
 
 <br />
 
+<!-- GITHUB STATS -->
+[![Stars](https://img.shields.io/github/stars/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind?style=for-the-badge&logo=github&color=yellow)](https://github.com/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind/stargazers)
+[![Forks](https://img.shields.io/github/forks/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind?style=for-the-badge&logo=github&color=blue)](https://github.com/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind/fork)
+[![Issues](https://img.shields.io/github/issues/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind?style=for-the-badge&logo=github&color=red)](https://github.com/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind/issues)
+[![License](https://img.shields.io/github/license/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind?style=for-the-badge&color=green)](https://opensource.org/licenses/MIT)
+
+<br />
+
 <!-- TECH BADGES -->
 [![Gemini 3](https://img.shields.io/badge/Gemini_3-Google_DeepMind-4285F4?style=flat-square&logo=google&logoColor=white)](https://gemini3.devpost.com/)
 [![React](https://img.shields.io/badge/React-18.x-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-Auth-3ECF8E?style=flat-square&logo=supabase)](https://supabase.com/)
 [![Vite](https://img.shields.io/badge/Vite-5.x-646CFF?style=flat-square&logo=vite)](https://vitejs.dev/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
 <br />
 
@@ -22,8 +29,13 @@
   <b>Assertion Engine</b> is a next-generation research validation platform that allows academics to <b>stress-test their hypotheses</b> before committing time, money, and reputation. Using the power of <b>Gemini 3 API</b>, it analyzes papers, identifies logical vulnerabilities, scans for novelty conflicts, and provides actionable pivot recommendations.
 </p>
 
+<br />
+
 <!-- ACTION BUTTONS -->
-[🌐 Live Demo](https://assertionengine.vercel.app/) · [📂 GitHub](https://github.com/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind) · [🐛 Report Bug](https://github.com/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind/issues) · [✨ Request Feature](https://github.com/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind/issues)
+[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-Visit_Site-10B981?style=for-the-badge&labelColor=1E293B)](https://assertionengine.vercel.app/)
+[![Star This Repo](https://img.shields.io/badge/⭐_Star_This_Repo-Support_Us-FFD700?style=for-the-badge&labelColor=1E293B)](https://github.com/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind)
+[![Report Bug](https://img.shields.io/badge/🐛_Report_Bug-Issues-EF4444?style=for-the-badge&labelColor=1E293B)](https://github.com/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind/issues)
+[![Request Feature](https://img.shields.io/badge/✨_Request_Feature-Ideas-8B5CF6?style=for-the-badge&labelColor=1E293B)](https://github.com/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind/issues)
 
 </div>
 
