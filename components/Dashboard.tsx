@@ -299,9 +299,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                                                 await deleteProject(p.id);
                                             }
                                         }}
-                                        className="p-2 rounded-lg hover:bg-rose-500/10 text-slate-500 hover:text-rose-500 transition-colors"
+                                        className="p-3 rounded-lg hover:bg-rose-500/10 text-slate-500 hover:text-rose-500 transition-colors"
                                     >
-                                        <Trash2 className="w-4 h-4" />
+                                        <Trash2 className="w-5 h-5" />
                                     </button>
                                 </td>
                             </tr>
