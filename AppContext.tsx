@@ -851,23 +851,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   return (
-    <AppContext.Provider value={{ 
-      user, 
-      projects, 
-      activeProjectId, 
-      logs,
+    <AppContext.Provider value={{
+      user,
       isLoading,
-      login, 
-      logout, 
-      signup,
-      updateUser,
-      createProject, 
-      setActiveProject, 
+      projects,
+      activeProjectId,
+      getActiveProject,
+      setActiveProject,
+      createProject,
       updateProject,
       deleteProject,
+      logs,
       addLog,
       clearLogs,
-      getActiveProject
+      logout
     }}>
       {children}
     </AppContext.Provider>
