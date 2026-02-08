@@ -508,9 +508,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       
       if (data.user) {
-        console.log('👤 User authenticated successfully, fetching profile...');
-        // Pass the user object so we don't need to fetch it again if profile load fails
-        await fetchUserProfile(data.user.id, data.user);
+        console.log('👤 User authenticated successfully, waiting for event listener to handle profile...');
+        // We rely on onAuthStateChange to trigger fetchUserProfile and optimistic updates
+        // This prevents race conditions and "u is not a function" errors if state updates conflict
         console.log('✅ Login complete!');
       }
     } catch (error: any) {
@@ -870,6 +870,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     <AppContext.Provider value={{
       user,
       isLoading,
+      login,
+      signup,
+      logout,
+      updateUser,
       projects,
       activeProjectId,
       getActiveProject,
@@ -879,8 +883,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       deleteProject,
       logs,
       addLog,
-      clearLogs,
-      logout
+      clearLogs
     }}>
       {children}
     </AppContext.Provider>
