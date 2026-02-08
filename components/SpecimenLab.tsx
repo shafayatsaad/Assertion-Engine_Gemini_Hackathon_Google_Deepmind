@@ -188,6 +188,8 @@ export const SpecimenLab: React.FC<SpecimenLabProps> = ({ onNavigate }) => {
         <nav className="flex items-center text-sm font-medium text-slate-500 mb-6">
             <button onClick={() => onNavigate('dashboard')} className="hover:text-white transition-colors">Dashboard</button>
             <ChevronRight className="w-4 h-4 mx-2 text-slate-700" />
+            <button onClick={() => onNavigate('analysis')} className="hover:text-white transition-colors">Analysis</button>
+            <ChevronRight className="w-4 h-4 mx-2 text-slate-700" />
             <span className="text-emerald-400">Specimen Lab</span>
         </nav>
 
