@@ -150,9 +150,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       console.log('📡 Attempting to fetch profile from Supabase...');
       
-      // Create a promise that rejects after 20 seconds
+      // Create a promise that rejects after 40 seconds
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Request timed out')), 20000);
+        setTimeout(() => reject(new Error('Request timed out')), 40000);
       });
 
       // Race the Supabase query against the timeout
