@@ -305,11 +305,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // --- Helper: Load Projects ---
+  const [isFetchingProjects, setIsFetchingProjects] = useState(false);
+
   const loadProjects = async (userId: string) => {
+    if (isFetchingProjects) return;
+    
     console.log('📁 Loading projects for user:', userId);
+    setIsFetchingProjects(true);
+    
     try {
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Projects load timed out')), 5000);
+        setTimeout(() => reject(new Error('Projects load timed out')), 8000);
       });
 
       const projectsPromise = supabase
@@ -321,10 +327,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const result: any = await Promise.race([projectsPromise, timeoutPromise]);
       const { data, error } = result;
 
-      
       if (error) {
         console.error('❌ Error loading projects:', error);
-        throw error;
+        // On error, we DO NOT clear the projects state to prevent flickering
+        return;
       }
       
       console.log('📊 Projects data:', { count: data?.length || 0 });
@@ -346,12 +352,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           logs: [],
           analysisChat: localData.analysisChat || [],
           metrics: {
-            confidence: p.confidence || 0,
+            confidence: p.confidence || localData.metrics?.confidence || 0,
             samples: localData.metrics?.samples || 0,
             computeTime: localData.metrics?.computeTime || "0h 0m",
-            logicConsistency: p.logic_consistency || 0,
-            dataLineage: p.data_lineage || 0,
-            noveltyIndex: p.novelty_index || 0,
+            logicConsistency: p.logic_consistency || localData.metrics?.logicConsistency || 0,
+            dataLineage: p.data_lineage || localData.metrics?.dataLineage || 0,
+            noveltyIndex: p.novelty_index || localData.metrics?.noveltyIndex || 0,
             radar: p.radar || localData.metrics?.radar || "50,50,50,50,50"
           },
           vulnerabilities: p.vulnerabilities || localData.vulnerabilities || [],
@@ -359,16 +365,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           scopeAbort: p.scope_abort || localData.scopeAbort || [],
           fullContent: p.full_content || localData.fullContent || "",
           specimens: localData.specimens || [],
-          noveltyPapers: localData.noveltyPapers || []
+          noveltyPapers: localData.noveltyPapers || [],
+          roadmap: p.roadmap || localData.roadmap || []
         };
       });
       
-      setProjects(transformedProjects);
-      console.log('✅ Projects loaded & hydrated from LocalStorage mirror where applicable');
+      // Only update if we actually got data (prevents clearing during glitchy reconnects)
+      if (transformedProjects.length > 0 || projects.length === 0) {
+          setProjects(transformedProjects);
+          console.log('✅ Projects loaded & hydrated successfully');
+      }
     } catch (error) {
-      console.error('❌ Error loading projects:', error);
-      // Don't throw - allow login to succeed even if projects fail to load
-      setProjects([]);
+      console.error('❌ Error in leadProjects catch:', error);
+    } finally {
+      setIsFetchingProjects(false);
     }
   };
 
