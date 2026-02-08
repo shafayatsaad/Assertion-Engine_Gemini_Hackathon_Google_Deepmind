@@ -1,38 +1,31 @@
-<p align="center">
-  <img src="https://img.shields.io/badge/Gemini_3-Google_DeepMind-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Gemini 3" />
-  <img src="https://img.shields.io/badge/React-18.x-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React" />
-  <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/Supabase-Auth-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" />
-  <img src="https://img.shields.io/badge/Vite-5.x-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" />
-</p>
+<div align="center">
+
+<!-- HEADER BANNER -->
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=12,14,19,20,24&height=200&section=header&text=Assertion%20Engine&fontSize=60&fontAlignY=35&animation=fadeIn&desc=AI-Powered%20Academic%20Research%20Validation&descAlignY=55&descSize=18" width="100%" />
 
 <!-- LANGUAGE TOGGLE -->
-<p align="center">
-  <a href="./README.md"><img src="https://img.shields.io/badge/🇺🇸_English-Selected-10B981?style=for-the-badge" alt="English" /></a>
-  <a href="./README_JP.md"><img src="https://img.shields.io/badge/🇯🇵_日本語-Switch-64748B?style=for-the-badge" alt="Japanese" /></a>
-</p>
+<br/>
 
----
+[![English](https://img.shields.io/badge/🇺🇸_English-SELECTED-10B981?style=for-the-badge&labelColor=1E293B)](./README.md)
+[![日本語](https://img.shields.io/badge/🇯🇵_日本語-CLICK_TO_SWITCH-64748B?style=for-the-badge&labelColor=1E293B)](./README_JP.md)
 
-<h1 align="center">
-  🧪 Assertion Engine 🧪
-</h1>
+<br/>
 
-<p align="center">
-  <strong>AI-Powered Academic Research Validation Platform</strong>
-</p>
+<!-- TECH BADGES -->
+[![Gemini 3](https://img.shields.io/badge/Gemini_3-Google_DeepMind-4285F4?style=flat-square&logo=google&logoColor=white)](https://gemini3.devpost.com/)
+[![React](https://img.shields.io/badge/React-18.x-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-Auth-3ECF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com/)
+[![Vite](https://img.shields.io/badge/Vite-5.x-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
 
-<p align="center">
-  <a href="https://assertionengine.vercel.app/">
-    <img src="https://img.shields.io/badge/🌐_Live_Demo-assertionengine.vercel.app-00C853?style=for-the-badge" alt="Live Demo" />
-  </a>
-  <a href="https://github.com/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind">
-    <img src="https://img.shields.io/badge/📂_GitHub-Repository-181717?style=for-the-badge&logo=github" alt="GitHub" />
-  </a>
-  <a href="https://gemini3.devpost.com/">
-    <img src="https://img.shields.io/badge/🏆_Hackathon-Gemini_3-8B5CF6?style=for-the-badge" alt="Devpost" />
-  </a>
-</p>
+<br/>
+
+<!-- ACTION BUTTONS -->
+[![Live Demo](https://img.shields.io/badge/🚀_LIVE_DEMO-assertionengine.vercel.app-00C853?style=for-the-badge&labelColor=1E293B)](https://assertionengine.vercel.app/)
+[![GitHub](https://img.shields.io/badge/📂_SOURCE_CODE-GitHub-181717?style=for-the-badge&logo=github)](https://github.com/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind)
+[![Hackathon](https://img.shields.io/badge/🏆_HACKATHON-Gemini_3-8B5CF6?style=for-the-badge)](https://gemini3.devpost.com/)
+
+</div>
 
 ---
 
@@ -57,12 +50,14 @@
 
 Using the power of **Gemini 3 API**, the platform analyzes academic papers, identifies logical vulnerabilities, scans for novelty conflicts, and provides actionable pivot recommendations.
 
-### Key Capabilities
+### 🔑 Key Capabilities
 
-- 🧠 **Mentor AI** — Instant feedback from an academic AI core
-- 🔬 **Specimen Lab** — Test data samples in controlled environments
-- ⚔️ **Strategy Duel** — Pit methodologies against competing theories
-- 📊 **Novelty Scanner** — Detect prior art conflicts before publishing
+| Module | Description |
+|--------|-------------|
+| 🧠 **Mentor AI** | Instant feedback from an academic AI core |
+| 🔬 **Specimen Lab** | Test data samples in controlled environments |
+| ⚔️ **Strategy Duel** | Pit methodologies against competing theories |
+| 📊 **Novelty Scanner** | Detect prior art conflicts before publishing |
 
 ---
 
@@ -70,12 +65,14 @@ Using the power of **Gemini 3 API**, the platform analyzes academic papers, iden
 
 Academic researchers face critical challenges:
 
-- ❌ **Wasted Resources** — Months of work on flawed hypotheses
-- ❌ **Reputation Damage** — Publishing easily-refutable claims
-- ❌ **Novelty Conflicts** — Unknown prior art discovered post-publication
-- ❌ **Logic Gaps** — Undetected flaws in methodology
+| Problem | Impact |
+|---------|--------|
+| ❌ **Wasted Resources** | Months of work on flawed hypotheses |
+| ❌ **Reputation Damage** | Publishing easily-refutable claims |
+| ❌ **Novelty Conflicts** | Unknown prior art discovered post-publication |
+| ❌ **Logic Gaps** | Undetected flaws in methodology |
 
-**Manual validation is time-consuming and error-prone.** Assertion Engine automates the validation pipeline—saving time, protecting reputation, and increasing the quality of published research.
+> **Manual validation is time-consuming and error-prone.** Assertion Engine automates the validation pipeline—saving time, protecting reputation, and increasing the quality of published research.
 
 ---
 
@@ -204,11 +201,11 @@ assertion-engine/
 
 ## 🎬 Demo
 
-<p align="center">
-  <a href="https://assertionengine.vercel.app/">
-    <img src="https://img.shields.io/badge/🚀_Try_Live_Demo-assertionengine.vercel.app-10B981?style=for-the-badge&labelColor=1E293B" alt="Try Demo" />
-  </a>
-</p>
+<div align="center">
+
+[![Try Demo](https://img.shields.io/badge/🚀_TRY_LIVE_DEMO-assertionengine.vercel.app-10B981?style=for-the-badge&labelColor=1E293B)](https://assertionengine.vercel.app/)
+
+</div>
 
 ### Demo Workflow
 
@@ -222,6 +219,7 @@ assertion-engine/
 
 ## 👤 Developer
 
+<div align="center">
 <table>
 <tr>
 <td align="center">
@@ -248,14 +246,17 @@ assertion-engine/
 </td>
 </tr>
 </table>
+</div>
 
 ---
 
 ## 🏆 Hackathon
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Google_DeepMind-Gemini_3_Hackathon-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Gemini 3 Hackathon" />
-</p>
+<div align="center">
+
+[![Gemini 3 Hackathon](https://img.shields.io/badge/Google_DeepMind-Gemini_3_Hackathon-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://gemini3.devpost.com/)
+
+</div>
 
 This project was built for the **Gemini 3 Hackathon** hosted by **Google DeepMind**.
 
@@ -274,12 +275,12 @@ This project is licensed under the **MIT License**.
 
 ---
 
-<p align="center">
-  <sub>Made with ❤️ for the Gemini 3 Hackathon</sub>
-</p>
+<div align="center">
 
-<p align="center">
-  <a href="https://assertionengine.vercel.app/">
-    <img src="https://img.shields.io/badge/🌐_Visit_Website-assertionengine.vercel.app-10B981?style=for-the-badge" alt="Website" />
-  </a>
-</p>
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=12,14,19,20,24&height=100&section=footer" width="100%" />
+
+Made with ❤️ for the Gemini 3 Hackathon
+
+[![Website](https://img.shields.io/badge/🌐_VISIT_WEBSITE-assertionengine.vercel.app-10B981?style=for-the-badge)](https://assertionengine.vercel.app/)
+
+</div>
