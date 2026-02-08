@@ -245,6 +245,16 @@ export const NoveltyPage: React.FC<NoveltyPageProps> = ({ onNavigate }) => {
                 </button>
             </motion.div>
 
+            {/* Scan Mode Indicator */}
+            {papers.length > 0 && (
+                <div className="flex items-center justify-end gap-2 text-xs font-mono text-slate-500 mb-4 px-1">
+                    <span className="uppercase tracking-wider">Analysis Context:</span>
+                    <span className={`px-2 py-1 rounded border font-medium ${useDocumentContext && activeProject?.fullContent ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-slate-800 border-slate-700 text-slate-400'}`}>
+                        {useDocumentContext && activeProject?.fullContent ? 'HYPOTHESIS + FULL DOCUMENT' : 'HYPOTHESIS ONLY'}
+                    </span>
+                </div>
+            )}
+
             {/* Paper Cards Grid */}
             <div className="grid md:grid-cols-3 gap-6 min-h-[200px]">
                 {papers.length > 0 ? (
