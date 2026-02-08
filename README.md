@@ -8,13 +8,16 @@
 
 <br />
 
+
 <!-- GITHUB STATS -->
+<!-- 
 [![Stars](https://img.shields.io/github/stars/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind?style=for-the-badge&logo=github&color=yellow)](https://github.com/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind/stargazers)
 [![Forks](https://img.shields.io/github/forks/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind?style=for-the-badge&logo=github&color=blue)](https://github.com/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind/fork)
 [![Issues](https://img.shields.io/github/issues/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind?style=for-the-badge&logo=github&color=red)](https://github.com/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind/issues)
 [![License](https://img.shields.io/github/license/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind?style=for-the-badge&color=green)](https://opensource.org/licenses/MIT)
 
 <br />
+-->
 
 <!-- TECH BADGES -->
 [![Gemini 3](https://img.shields.io/badge/Gemini_3-Google_DeepMind-4285F4?style=flat-square&logo=google&logoColor=white)](https://gemini3.devpost.com/)
