@@ -299,9 +299,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                                                 await deleteProject(p.id);
                                             }
                                         }}
-                                        className="p-3 rounded-lg hover:bg-rose-500/10 text-slate-500 hover:text-rose-500 transition-colors"
+                                        className="p-3 rounded-lg bg-slate-900/50 hover:bg-rose-500/10 text-slate-500 hover:text-rose-500 transition-colors border border-white/5 hover:border-rose-500/20"
+                                        title="Delete Project"
                                     >
-                                        <Trash2 className="w-5 h-5" />
+                                        <Trash2 className="w-4 h-4" />
                                     </button>
                                 </td>
                             </tr>
