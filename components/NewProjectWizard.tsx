@@ -36,6 +36,7 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
   const [initialMetrics, setInitialMetrics] = useState<any>(null);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const { createProject, addLog } = useApp();
 
   const handleRemoveFile = (e: React.MouseEvent) => {
@@ -241,21 +242,23 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
                 const files = e.dataTransfer.files;
                 if (files && files.length > 0) handleFileUpload(files[0]);
               }}
+              onClick={() => !uploadedFile && fileInputRef.current?.click()}
            >
-              {!uploadedFile && (
-                  <input 
-                    type="file" 
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
-                    onChange={(e) => {
-                      console.log('📁 File input onChange fired', e.target.files);
-                      if (e.target.files && e.target.files.length > 0) {
-                        console.log('📁 Calling handleFileUpload with:', e.target.files[0].name);
-                        handleFileUpload(e.target.files[0]);
-                      }
-                    }}
-                    accept=".pdf,.md,.txt,.tex"
-                  />
-              )}
+              <input 
+                ref={fileInputRef}
+                type="file" 
+                className="hidden"
+                onChange={(e) => {
+                  console.log('📁 File input onChange fired', e.target.files);
+                  if (e.target.files && e.target.files.length > 0) {
+                    console.log('📁 Calling handleFileUpload with:', e.target.files[0].name);
+                    handleFileUpload(e.target.files[0]);
+                  }
+                  // Reset input value to allow re-uploading the same file if needed
+                  e.target.value = '';
+                }}
+                accept=".pdf,.md,.txt,.tex"
+              />
               
               <AnimatePresence mode="wait">
                 {isUploading ? (
@@ -324,7 +327,14 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
                       <span className="text-emerald-500/60 text-xs">AI will auto-extract hypothesis and claims.</span>
                     </p>
                     
-                    <button className="px-6 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg text-sm transition-colors shadow-lg shadow-emerald-500/20 pointer-events-none">
+                    <button 
+                       type="button"
+                       onClick={(e) => {
+                         e.stopPropagation();
+                         fileInputRef.current?.click();
+                       }}
+                       className="px-6 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg text-sm transition-colors shadow-lg shadow-emerald-500/20"
+                    >
                        Browse Files
                     </button>
                   </motion.div>
