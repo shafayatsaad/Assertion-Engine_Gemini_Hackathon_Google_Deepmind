@@ -65,14 +65,19 @@ export const NoveltyPage: React.FC<NoveltyPageProps> = ({ onNavigate }) => {
             - **NOVELTY SCORE (0-100)**: Higher is better (More Unique).
             - **RISK (Collision Probability)**: This is the inverse of Novelty. High Risk = Low Novelty.
             
-            SCORING LOGIC:
-            1. **HYPOTHESIS ONLY MODE**: Be stricter. Since ideas are cheap, finding a similar idea should trigger HIGH RISK (similarity > 80%).
-            2. **FULL DOCUMENT MODE**: Be lenient on broad topics, STRICT on specifics. 
-               - If the user provides a full paper, look for *Execution Details* (Architecture, Dataset, specific tweak). 
-               - Even if the TOPIC is identical (e.g. "Cancer Detection with AI"), if the *Architecture* is different, RISK SHOULD BE LOW (Similarity < 40%).
-               - **The Full Document should acts as a DEFENSE.** Specific details usually *prove* novelty. If including the doc *increases* risk, it means the *implementation itself* is a copy.
+            SCORING LOGIC - READ CAREFULLY:
+            1. **HYPOTHESIS ONLY MODE**: 
+               - If the idea exists, Risk is HIGH (>80%). Ideas are cheap.
             
-            - Do NOT flag high similarity just because the TOPIC is the same.
+            2. **FULL DOCUMENT MODE**: 
+               - **DEFAULT TO LOW RISK** if the detailed implementation is unique.
+               - **DO NOT** flag high risk based on the Abstract or Introduction.
+               - **LOOK DEEPER**: scan for Specific Model Architectures, Loss Functions, Hyperparameters, and Custom Datasets.
+               - If the user has specific diagrams, charts, or math formulas that differ from the "conflicing" paper, then **RISK IS LOW (<30%)**.
+               - **Crucial**: A paper with the same topic but a different Neural Network architecture is NOT a collision. It is a "Related Work". 
+               - **ONLY** flag >70% Risk if the *Code/Math/Data* is >90% identical.
+            
+            - **Differentiation is Key**: If the user's paper has a unique "System Diagram" or "Methodology" section, reward it with high Novelty.
             - Highlight the "Key Differentiator" of the user's paper.
 
             Identify specific:
