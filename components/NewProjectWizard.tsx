@@ -57,21 +57,23 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
             await new Promise<void>((resolve, reject) => {
                 const script = document.createElement('script');
                 script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-                script.onload = () => {
-                     (window as any).pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-                     resolve();
-                };
+                script.onload = () => resolve();
                 script.onerror = reject;
                 document.head.appendChild(script);
             });
             pdfjsLib = (window as any).pdfjsLib;
         } catch (e) {
              console.error("Failed to load PDF.js", e);
-             return `[PDF Engine Load Failed]`;
+             return `[PDF Engine Load Failed: ${e}]`;
         }
     }
-    
+
     if (!pdfjsLib) return `[PDF extraction unavailable: pdfjsLib not loaded]`;
+
+    // Explicitly set worker if not set
+    if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
     
     try {
         const arrayBuffer = await file.arrayBuffer();
@@ -79,16 +81,25 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
         const pdf = await loadingTask.promise;
         let fullText = "";
         
-        for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) { // Limit to 10 pages for speed/tokens
-            const page = await pdf.getPage(i);
-            const content = await page.getTextContent();
-            const strings = content.items.map((item: any) => item.str);
-            fullText += strings.join(" ") + "\n";
+        for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) {
+            try {
+                const page = await pdf.getPage(i);
+                const content = await page.getTextContent();
+                const strings = content.items.map((item: any) => item.str);
+                fullText += strings.join(" ") + "\n";
+            } catch (pageError) {
+                console.warn(`Error extracting page ${i}`, pageError);
+            }
         }
+        
+        if (!fullText.trim()) {
+            return "[PDF extracted but contained no text. It might be scanned image.]";
+        }
+
         return fullText;
-    } catch (e) {
+    } catch (e: any) {
         console.error("PDF Extraction failed:", e);
-        return `[PDF extraction failed: ${file.name}]`;
+        return `[PDF extraction failed: ${e.message || e}]`;
     }
   };
 
@@ -133,8 +144,15 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
         setFullContent(content);
         setUploadProgress(50);
         
-        if (content && content.length > 50) {
+        if (content.startsWith('[PDF') || content.trim().length === 0) {
+            setHypothesis("Unable to extract text from document. Please enter hypothesis manually.");
+            setAssumptions(["Manual Entry Required"]);
+            setUploadProgress(100); // Allow them to proceed manually
+            addLog({ module: 'Intake', event: `Text extraction failed or empty. Manual entry required.`, status: 'warning' });
+        } else if (content && content.length > 50) {
             addLog({ module: 'Intake', event: `Extracting insights from ${file.name}...`, status: 'info' });
+            
+            // ... (rest of AI extraction logic) ...
             
             const extractPrompt = `
                 Analyze this document content and extract the primary research hypothesis and a list of key assumptions.
