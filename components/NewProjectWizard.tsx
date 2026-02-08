@@ -200,8 +200,6 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
         {/* Breadcrumb */}
         <nav className="flex items-center text-sm font-medium text-slate-500 mb-6">
             <button onClick={() => onNavigate('dashboard')} className="hover:text-white transition-colors">Dashboard</button>
-            <ChevronRight className="w-4 h-4 mx-2 text-slate-700" />
-            <span className="text-emerald-400">Project</span>
         </nav>
 
         {/* Research Intake Phase */}
