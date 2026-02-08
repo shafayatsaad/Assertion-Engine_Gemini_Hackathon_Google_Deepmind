@@ -150,20 +150,52 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       console.log('📡 Attempting to fetch profile from Supabase...');
       
-      // Create a promise that rejects after 40 seconds
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Request timed out')), 40000);
-      });
+      let profile = null;
+      let error = null;
+      let retries = 3;
 
-      // Race the Supabase query against the timeout
-      const profilePromise = supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+      while (retries > 0) {
+          try {
+              console.log(`📡 Fetching profile (Attempt ${4 - retries}/3)...`);
+              
+              const timeoutPromise = new Promise((_, reject) => {
+                  setTimeout(() => reject(new Error('Request timed out')), 15000);
+              });
 
-      const result: any = await Promise.race([profilePromise, timeoutPromise]);
-      const { data: profile, error } = result;
+              const profilePromise = supabase
+                  .from('profiles')
+                  .select('*')
+                  .eq('id', userId)
+                  .single();
+
+              const result: any = await Promise.race([profilePromise, timeoutPromise]);
+              profile = result.data;
+              error = result.error;
+
+              if (error) {
+                  console.warn(`⚠️ Error fetching profile (Attempt ${4 - retries}):`, error);
+                  if (retries > 1) {
+                      retries--;
+                      await new Promise(res => setTimeout(res, 1000));
+                      continue;
+                  }
+              }
+              
+              // If we got here with no error, or if we ignored the error but have no data (unlikely with single()), break.
+              // Actually single() returns error if no row.
+              break; 
+
+          } catch (err) {
+              console.error(`❌ Fetch attempt ${4 - retries} failed:`, err);
+              error = err;
+              if (retries > 1) {
+                  retries--;
+                  await new Promise(res => setTimeout(res, 1000));
+              } else {
+                  break;
+              }
+          }
+      }
       
       console.log('📊 Profile query result:', { 
         hasProfile: !!profile, 
