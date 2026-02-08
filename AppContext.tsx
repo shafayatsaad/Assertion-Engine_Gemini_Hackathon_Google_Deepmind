@@ -150,9 +150,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       console.log('📡 Attempting to fetch profile from Supabase...');
       
-      // Create a promise that rejects after 5 seconds
+      // Create a promise that rejects after 20 seconds
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Request timed out')), 10000);
+        setTimeout(() => reject(new Error('Request timed out')), 20000);
       });
 
       // Race the Supabase query against the timeout
@@ -633,7 +633,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // --- Project Handlers ---
 
   const createProject = async (data: Partial<Project>): Promise<string> => {
-    if (!user) throw new Error('Not authenticated');
+    // Just-in-time Auth Check: If local user state is missing, try to fetch from Supabase directly
+    if (!user && isSupabaseConfigured) {
+        const { data: { user: authUser }, error } = await supabase.auth.getUser();
+        if (error || !authUser) throw new Error('Not authenticated: Session expired or invalid.');
+        // If we have a valid auth user, we can proceed. The RLS will handle permission checks.
+        // We might want to trigger a profile fetch here to restore state, but for now let's just allow the creation.
+    } else if (!user) {
+         throw new Error('Not authenticated');
+    }
     
     try {
       // Fallback to localStorage if Supabase not configured
