@@ -412,6 +412,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         console.error('❌ Error getting session:', error);
       } else if (session?.user) {
         console.log('✅ Found existing session for:', session.user.email);
+        
+        // OPTIMISTIC UPDATE: Set basic user state immediately so UI doesn't look broken
+        setUser({
+            id: session.user.id,
+            name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
+            email: session.user.email || '',
+            avatar: session.user.user_metadata?.avatar_url
+        });
+        
         await fetchUserProfile(session.user.id, session.user);
       } else {
         console.log('ℹ️ No active session found');
@@ -425,6 +434,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         console.log('🔐 Auth State Change:', event, session?.user?.email);
         
         if (event === 'SIGNED_IN' && session?.user) {
+          // Optimistic update
+          setUser({
+            id: session.user.id,
+            name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
+            email: session.user.email || '',
+            avatar: session.user.user_metadata?.avatar_url
+          });
           await fetchUserProfile(session.user.id, session.user);
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
