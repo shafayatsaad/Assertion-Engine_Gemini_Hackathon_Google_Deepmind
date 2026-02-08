@@ -91,32 +91,61 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                     <h4 className="text-xs font-bold text-white tracking-[0.2em] uppercase opacity-90">Resources</h4>
                     <ul className="space-y-4 text-sm text-slate-400">
                         <li>
-                            <a href="#" className="hover:text-emerald-400 transition-all duration-300 group flex items-center gap-2 hover:translate-x-1">
+                            <a href="https://github.com/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-400 transition-all duration-300 group flex items-center gap-2 hover:translate-x-1">
                                 <span className="w-0 group-hover:w-2 h-px bg-emerald-400 transition-all duration-300 shadow-[0_0_8px_rgba(52,211,153,0.5)]"></span>
-                                GitHub
+                                GitHub Repository
                             </a>
                         </li>
                         <li>
-                            <a href="#" className="hover:text-emerald-400 transition-all duration-300 group flex items-center gap-2 hover:translate-x-1">
+                            <a href="https://github.com/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind#readme" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-400 transition-all duration-300 group flex items-center gap-2 hover:translate-x-1">
                                 <span className="w-0 group-hover:w-2 h-px bg-emerald-400 transition-all duration-300 shadow-[0_0_8px_rgba(52,211,153,0.5)]"></span>
                                 Documentation
                             </a>
                         </li>
                         <li>
-                            <a href="#" className="hover:text-emerald-400 transition-all duration-300 group flex items-center gap-2 hover:translate-x-1">
+                            <a href="https://github.com/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind#-api-documentation" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-400 transition-all duration-300 group flex items-center gap-2 hover:translate-x-1">
                                 <span className="w-0 group-hover:w-2 h-px bg-emerald-400 transition-all duration-300 shadow-[0_0_8px_rgba(52,211,153,0.5)]"></span>
                                 API Guide
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://ai.google.dev/gemini-api/docs" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-400 transition-all duration-300 group flex items-center gap-2 hover:translate-x-1">
+                                <span className="w-0 group-hover:w-2 h-px bg-emerald-400 transition-all duration-300 shadow-[0_0_8px_rgba(52,211,153,0.5)]"></span>
+                                Gemini API Docs
                             </a>
                         </li>
                     </ul>
                 </div>
 
-                {/* MISSION Column */}
+                {/* CONNECT Column */}
                 <div className="space-y-7">
-                    <h4 className="text-xs font-bold text-white tracking-[0.2em] uppercase opacity-90">Mission</h4>
-                    <p className="text-sm text-slate-400 leading-relaxed font-light">
-                        Built to push the boundaries of multi-agent collaboration and real-time intelligence extraction, serving as a digital wind tunnel for scientific hypotheses.
-                    </p>
+                    <h4 className="text-xs font-bold text-white tracking-[0.2em] uppercase opacity-90">Connect</h4>
+                    <ul className="space-y-4 text-sm text-slate-400">
+                        <li>
+                            <a href="https://gemini3.devpost.com/" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-400 transition-all duration-300 group flex items-center gap-2 hover:translate-x-1">
+                                <span className="w-0 group-hover:w-2 h-px bg-emerald-400 transition-all duration-300 shadow-[0_0_8px_rgba(52,211,153,0.5)]"></span>
+                                Devpost Hackathon
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://www.linkedin.com/in/shafayatsaad/" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-400 transition-all duration-300 group flex items-center gap-2 hover:translate-x-1">
+                                <span className="w-0 group-hover:w-2 h-px bg-emerald-400 transition-all duration-300 shadow-[0_0_8px_rgba(52,211,153,0.5)]"></span>
+                                LinkedIn
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://shafayatsaad.vercel.app/" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-400 transition-all duration-300 group flex items-center gap-2 hover:translate-x-1">
+                                <span className="w-0 group-hover:w-2 h-px bg-emerald-400 transition-all duration-300 shadow-[0_0_8px_rgba(52,211,153,0.5)]"></span>
+                                Portfolio
+                            </a>
+                        </li>
+                        <li>
+                            <a href="mailto:shafayat.saad30@gmail.com" className="hover:text-emerald-400 transition-all duration-300 group flex items-center gap-2 hover:translate-x-1">
+                                <span className="w-0 group-hover:w-2 h-px bg-emerald-400 transition-all duration-300 shadow-[0_0_8px_rgba(52,211,153,0.5)]"></span>
+                                Contact Us
+                            </a>
+                        </li>
+                    </ul>
                 </div>
 
             </div>
