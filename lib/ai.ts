@@ -13,18 +13,39 @@ export const callAI = async (
     messages: { role: 'ai' | 'user' | 'model' | 'system', text: string }[] = [],
     options: AIServiceOptions = {}
 ) => {
-    const geminiKey = localStorage.getItem('ae_api_key');
+    const geminiKey = localStorage.getItem('ae_api_key') || import.meta.env.VITE_GEMINI_API_KEY;
     const universalKey = localStorage.getItem('ae_universal_key');
     const universalProvider = localStorage.getItem('ae_universal_provider') as AIProvider | null;
 
-    // determine which provider to use
-    // If a universal key is active, prioritize it (since Gemini is often blocked for the user)
-    const activeProvider = universalProvider || 'google';
-    const activeKey = (activeProvider === 'google') ? geminiKey : universalKey;
+    // Debug logging
+    console.log('🔑 AI Config:', { 
+        hasGeminiKey: !!geminiKey, 
+        hasUniversalKey: !!universalKey, 
+        universalProvider 
+    });
 
-    if (!activeKey) {
-        throw new Error(`No API key found for provider: ${activeProvider}`);
+    // Determine which provider to use
+    // Priority: 1) Explicit universal provider, 2) If universal key exists, default to groq, 3) If gemini key exists, use google
+    let activeProvider: AIProvider;
+    let activeKey: string | null;
+
+    if (universalProvider && universalKey) {
+        // User explicitly configured a universal provider
+        activeProvider = universalProvider;
+        activeKey = universalKey;
+    } else if (universalKey) {
+        // Universal key exists but no provider set - default to groq
+        activeProvider = 'groq';
+        activeKey = universalKey;
+    } else if (geminiKey) {
+        // Fall back to Google/Gemini
+        activeProvider = 'google';
+        activeKey = geminiKey;
+    } else {
+        throw new Error(`No API key found. Please configure an API key in Settings or set VITE_GEMINI_API_KEY in .env.local.`);
     }
+
+    console.log('🚀 Using provider:', activeProvider);
 
     if (activeProvider === 'google') {
         const genAI = new GoogleGenerativeAI(activeKey);
