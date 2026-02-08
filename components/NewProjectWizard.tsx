@@ -139,6 +139,7 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
         }
 
         if (!title) setTitle(file.name.split('.')[0]);
+        setUploadedFile(file);
         setUploadProgress(100);
         addLog({ module: 'Intake', event: `${file.name} processed successfully.`, status: 'success' });
 
@@ -232,7 +233,7 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className={`border border-dashed ${isUploading ? 'border-emerald-500 bg-emerald-500/10' : 'border-emerald-500/30 bg-emerald-500/[0.02]'} rounded-3xl h-64 flex flex-col items-center justify-center relative group hover:bg-emerald-500/[0.05] transition-all cursor-pointer overflow-hidden`}
+              className={`border border-dashed ${isUploading ? 'border-emerald-500 bg-emerald-500/10' : uploadedFile ? 'border-emerald-500 bg-emerald-500/10' : 'border-emerald-500/30 bg-emerald-500/[0.02]'} rounded-3xl h-64 flex flex-col items-center justify-center relative group hover:bg-emerald-500/[0.05] transition-all cursor-pointer overflow-hidden`}
               onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
               onDrop={(e) => {
                 e.preventDefault();
@@ -241,18 +242,20 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
                 if (files && files.length > 0) handleFileUpload(files[0]);
               }}
            >
-              <input 
-                type="file" 
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
-                onChange={(e) => {
-                  console.log('📁 File input onChange fired', e.target.files);
-                  if (e.target.files && e.target.files.length > 0) {
-                    console.log('📁 Calling handleFileUpload with:', e.target.files[0].name);
-                    handleFileUpload(e.target.files[0]);
-                  }
-                }}
-                accept=".pdf,.md,.txt,.tex"
-              />
+              {!uploadedFile && (
+                  <input 
+                    type="file" 
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                    onChange={(e) => {
+                      console.log('📁 File input onChange fired', e.target.files);
+                      if (e.target.files && e.target.files.length > 0) {
+                        console.log('📁 Calling handleFileUpload with:', e.target.files[0].name);
+                        handleFileUpload(e.target.files[0]);
+                      }
+                    }}
+                    accept=".pdf,.md,.txt,.tex"
+                  />
+              )}
               
               <AnimatePresence mode="wait">
                 {isUploading ? (
@@ -274,6 +277,36 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
                     </div>
                     <h3 className="text-lg font-medium text-white mb-1">Analyzing Document Structure...</h3>
                     <p className="text-emerald-400 text-xs font-mono animate-pulse">Extracting Hypothsis & Assumptions</p>
+                  </motion.div>
+                ) : uploadedFile ? (
+                   <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="flex flex-col items-center z-20 w-full px-6"
+                  >
+                    <div className="flex items-center gap-4 bg-slate-900/80 border border-emerald-500/30 p-4 rounded-xl w-full max-w-md backdrop-blur-sm shadow-lg shadow-emerald-500/10">
+                        <div className="p-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                            <FileText className="w-6 h-6 text-emerald-400" />
+                        </div>
+                        <div className="flex-1 min-w-0 text-left">
+                            <h4 className="text-white font-medium truncate text-sm">{uploadedFile.name}</h4>
+                            <p className="text-slate-400 text-xs mt-0.5">{(uploadedFile.size / 1024).toFixed(1)} KB • Ready for Analysis</p>
+                        </div>
+                        <button 
+                            onClick={handleRemoveFile}
+                            className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-colors"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
+                    <div className="mt-4 flex flex-col items-center">
+                         <div className="flex items-center gap-2 text-emerald-400 text-xs font-mono uppercase tracking-wider mb-2">
+                            <CheckCircle2 className="w-3 h-3" />
+                            Extraction Complete
+                         </div>
+                         <p className="text-slate-500 text-xs">Review the manifest below before proceeding.</p>
+                    </div>
                   </motion.div>
                 ) : (
                   <motion.div 
