@@ -39,21 +39,40 @@ export const NoveltyPage: React.FC<NoveltyPageProps> = ({ onNavigate }) => {
       addLog({ module: 'Novelty', event: `Started literature scan for ${activeProject.title}`, status: 'info' });
 
       try {
+        // LOGIC FIX: If "Ignore Document" is selected (useDocumentContext === false) AND we have a search term,
+        // treat the search term as the PRIMARY HYPOTHESIS/ABSTRACT to scan against.
+        const isCustomAbstract = !useDocumentContext && searchTerm.length > 10;
+        
         const docContent = useDocumentContext ? (activeProject.fullContent?.slice(0, 8000) || activeProject.specimens?.map((s:any) => s.content).join('\n').slice(0, 8000) || '') : '';
-        console.log('📄 Novelty Scan Context Length:', docContent.length);
+        const currentHypothesis = isCustomAbstract ? searchTerm : activeProject.hypothesis;
+        
+        console.log('📄 Novelty Scan Context:', { 
+            useDocumentContext, 
+            docLength: docContent.length,
+            isCustomAbstract,
+            hypothesisPreview: currentHypothesis.slice(0, 50)
+        });
         
         const systemPrompt = `
             You are a rigorous academic novelty engine. Your task is to analyze the user's research hypothesis ${useDocumentContext ? 'AND DOCUMENT CONTENT' : ''} to find "conflicting" or "related" academic papers.
             
-            Current Hypothesis: "${activeProject.hypothesis}"
-            Assumptions: ${activeProject.assumptions.join(', ')}
+            Current Hypothesis / Abstract: "${currentHypothesis}"
+            ${!isCustomAbstract ? `Assumptions: ${activeProject.assumptions.join(', ')}` : ''}
             Content (User's Uploaded Paper/Specimens): ${docContent || 'No full content used.'}
-            ${searchTerm ? `Specific Focus / Keywords: "${searchTerm}"` : ''}
+            ${searchTerm && !isCustomAbstract ? `Specific Focus / Keywords: "${searchTerm}"` : ''}
 
-            CRITICAL INSTRUCTION: 
-            - Do NOT flag high similarity just because the TOPIC is the same (e.g. "Cancer Detection"). 
-            - ONLY flag high similarity (>70%) if the METHODOLOGY, ARCHITECTURE, and DATASET are identical.
-            - If the user's paper uses a different approach (e.g. Transformers vs CNN) but for the same problem, similarity should be LOW (<40%) but listed as a "Competitor".
+            CRITICAL INSTRUCTION - "RISK" vs "NOVELTY" SCORING:
+            - **NOVELTY SCORE (0-100)**: Higher is better (More Unique).
+            - **RISK (Collision Probability)**: This is the inverse of Novelty. High Risk = Low Novelty.
+            
+            SCORING LOGIC:
+            1. **HYPOTHESIS ONLY MODE**: Be stricter. Since ideas are cheap, finding a similar idea should trigger HIGH RISK (similarity > 80%).
+            2. **FULL DOCUMENT MODE**: Be lenient on broad topics, STRICT on specifics. 
+               - If the user provides a full paper, look for *Execution Details* (Architecture, Dataset, specific tweak). 
+               - Even if the TOPIC is identical (e.g. "Cancer Detection with AI"), if the *Architecture* is different, RISK SHOULD BE LOW (Similarity < 40%).
+               - **The Full Document should acts as a DEFENSE.** Specific details usually *prove* novelty. If including the doc *increases* risk, it means the *implementation itself* is a copy.
+            
+            - Do NOT flag high similarity just because the TOPIC is the same.
             - Highlight the "Key Differentiator" of the user's paper.
 
             Identify specific:
@@ -249,8 +268,20 @@ export const NoveltyPage: React.FC<NoveltyPageProps> = ({ onNavigate }) => {
             {papers.length > 0 && (
                 <div className="flex items-center justify-end gap-2 text-xs font-mono text-slate-500 mb-4 px-1">
                     <span className="uppercase tracking-wider">Analysis Context:</span>
-                    <span className={`px-2 py-1 rounded border font-medium ${useDocumentContext && activeProject?.fullContent ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-slate-800 border-slate-700 text-slate-400'}`}>
-                        {useDocumentContext && activeProject?.fullContent ? 'HYPOTHESIS + FULL DOCUMENT' : 'HYPOTHESIS ONLY'}
+                    <span className={`px-2 py-1 rounded border font-medium ${
+                        !useDocumentContext && searchTerm.length > 10
+                            ? 'bg-amber-500/10 border-amber-500/30 text-amber-500' // Custom Abstract
+                            : useDocumentContext && (activeProject?.fullContent || (activeProject?.specimens && activeProject.specimens.length > 0))
+                                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' // Full Doc
+                                : 'bg-slate-800 border-slate-700 text-slate-400' // Hypothesis Only
+                    }`}>
+                        {
+                             !useDocumentContext && searchTerm.length > 10
+                                ? 'USER ABSTRACT / SEARCH TERM'
+                                : useDocumentContext && (activeProject?.fullContent || (activeProject?.specimens && activeProject.specimens.length > 0))
+                                    ? 'HYPOTHESIS + FULL DOCUMENT'
+                                    : 'HYPOTHESIS ONLY'
+                        }
                     </span>
                 </div>
             )}
