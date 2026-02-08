@@ -24,26 +24,41 @@ export const callAI = async (
         universalProvider 
     });
 
-    // Determine which provider to use
-    // Priority: 1) Explicit universal provider, 2) If universal key exists, default to groq, 3) If gemini key exists, use google
-    let activeProvider: AIProvider;
-    let activeKey: string | null;
+    // Force provider based on key format (Failsafe)
+    // This solves the issue where settings might say "google" but the user pasted a Groq key
+    const detectProvider = (key: string): AIProvider | null => {
+        if (!key) return null;
+        if (key.startsWith('gsk_')) return 'groq';
+        if (key.startsWith('sk-ant')) return 'anthropic';
+        if (key.startsWith('sk-') && !key.startsWith('sk-ant')) return 'openai';
+        if (key.startsWith('AIza')) return 'google';
+        return null; // Unknown or generic
+    };
 
-    if (universalProvider && universalKey) {
-        // User explicitly configured a universal provider
-        activeProvider = universalProvider;
-        activeKey = universalKey;
-    } else if (universalKey) {
-        // Universal key exists but no provider set - default to groq
-        activeProvider = 'groq';
-        activeKey = universalKey;
-    } else if (geminiKey) {
-        // Fall back to Google/Gemini
+    // Priority 1: Check Universal Key and auto-detect
+    let activeProvider: AIProvider | null = null;
+    let activeKey: string | null = null;
+
+    if (universalKey) {
+        const detected = detectProvider(universalKey);
+        if (detected) {
+            activeProvider = detected;
+            activeKey = universalKey;
+        } else {
+             // Fallback to stored provider or default to groq
+             activeProvider = universalProvider || 'groq';
+             activeKey = universalKey;
+        }
+    } 
+    // Priority 2: Check Gemini Key (Env or Local)
+    else if (geminiKey) {
         activeProvider = 'google';
         activeKey = geminiKey;
     } else {
-        throw new Error(`No API key found. Please configure an API key in Settings or set VITE_GEMINI_API_KEY in .env.local.`);
+        throw new Error(`No API key found. please configure an API key in Settings.`);
     }
+
+    console.log(`🚀 AI Service Init: Provider=${activeProvider} Key=...${activeKey?.slice(-4)}`);
 
     console.log('🚀 Using provider:', activeProvider);
 
