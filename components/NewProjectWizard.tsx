@@ -35,7 +35,19 @@ export const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onNavigate }
   const [fullContent, setFullContent] = useState('');
   const [initialMetrics, setInitialMetrics] = useState<any>(null);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const { createProject, addLog } = useApp();
+
+  const handleRemoveFile = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setUploadedFile(null);
+    setTitle('');
+    setFullContent('');
+    setHypothesis("Developing a sub-linear time complexity algorithm for multi-agent pathfinding in non-Euclidean space using quantum-inspired heuristics.");
+    setAssumptions(['Closed System', 'Infinite Compute', 'Static Dataset']);
+    setInitialMetrics(null);
+    setUploadProgress(0);
+  };
 
   const extractPdfText = async (file: File): Promise<string> => {
     const pdfjsLib = (window as any).pdfjsLib;
