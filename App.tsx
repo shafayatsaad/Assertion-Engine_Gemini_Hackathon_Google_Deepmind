@@ -127,7 +127,8 @@ const MainApp = () => {
   type Page = 'landing' | 'signin' | 'signup' | 'profile' | 'settings' | 'dashboard' | 'newproject' | 'library' | 'specimens' | 'analysis' | 'novelty';
   const [currentPage, setCurrentPage] = useState<Page>(() => {
     const saved = localStorage.getItem('assertions_current_page');
-    const validPages: Page[] = ['landing', 'signin', 'signup', 'profile', 'settings', 'dashboard', 'newproject', 'library', 'specimens', 'analysis', 'novelty'];
+    const validPages: Page[] = ['landing', 'profile', 'settings', 'dashboard', 'newproject', 'library', 'specimens', 'analysis', 'novelty'];
+    // We explicitly exclude 'signin' and 'signup' so refreshing sends you to landing (or dashboard if auth'd)
     return (saved && validPages.includes(saved as Page)) ? (saved as Page) : 'landing';
   });
   const { user, isLoading, activeProjectId, projects, setActiveProject } = useApp();
