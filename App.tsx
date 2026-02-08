@@ -138,9 +138,10 @@ const MainApp = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Redirect to dashboard if logged in and on landing/auth pages
+  // Redirect to dashboard if logged in and on auth pages (signin/signup)
+  // We allow 'landing' to be viewed even if logged in (user can click Dashboard in nav)
   useEffect(() => {
-    if (!isLoading && user && (currentPage === 'landing' || currentPage === 'signin' || currentPage === 'signup')) {
+    if (!isLoading && user && (currentPage === 'signin' || currentPage === 'signup')) {
       handleNavigate('dashboard');
     }
   }, [user, currentPage, isLoading]);
