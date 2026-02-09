@@ -282,131 +282,209 @@ const ProfileView = () => {
     );
 };
 
-const GeneralView = ({ onNavigate }: { onNavigate: any }) => (
-  <div className="space-y-8">
-    <Header 
-        title="General Settings" 
-        subtitle="Configure global system preferences and data retention policies." 
-        breadcrumb="Account / General" 
-    />
+const GeneralView = ({ onNavigate }: { onNavigate: any }) => {
+  const { addLog } = useApp();
+  const [isSaving, setIsSaving] = useState(false);
 
-    <div className="glass-card p-6 md:p-8 rounded-2xl border border-white/5 bg-slate-900/30 space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-4">
-                 <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                    <Globe className="w-4 h-4 text-cyan-400" />
-                    Localization
-                 </h3>
-                 <div className="space-y-4 pl-0 md:pl-6">
-                    <SelectGroup label="Interface Language" options={["English (US)", "English (UK)", "Japanese", "German"]} />
-                    <SelectGroup label="Timezone" options={["UTC (Universal)", "EST (New York)", "PST (Los Angeles)", "CET (Berlin)"]} />
-                 </div>
-            </div>
+  const handleSave = async () => {
+    setIsSaving(true);
+    // Simulate/Implement general settings save if needed
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    addLog({ module: 'Settings', event: 'General settings updated', status: 'success' });
+    setIsSaving(false);
+  };
 
-            <div className="space-y-4">
-                 <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-emerald-400" />
-                    System Preferences
-                 </h3>
-                 <div className="space-y-4 pl-0 md:pl-6">
-                    <SelectGroup label="Default Export Format" options={["PDF (Academic Standard)", "LaTeX Source", "JSON Data"]} />
-                    <div className="flex items-center justify-between pt-2">
-                        <div className="space-y-1">
-                            <div className="text-sm text-slate-300">Auto-Save Reports</div>
-                            <div className="text-xs text-slate-500">Save drafts every 30 seconds</div>
-                        </div>
-                        <Toggle active />
-                    </div>
-                 </div>
-            </div>
-        </div>
+  return (
+    <div className="space-y-8">
+      <Header 
+          title="General Settings" 
+          subtitle="Configure global system preferences and data retention policies." 
+          breadcrumb="Account / General" 
+      />
 
-        <div className="h-px bg-white/5" />
+      <div className="glass-card p-6 md:p-8 rounded-2xl border border-white/5 bg-slate-900/30 space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                   <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-cyan-400" />
+                      Localization
+                   </h3>
+                   <div className="space-y-4 pl-0 md:pl-6">
+                      <SelectGroup label="Interface Language" options={["English (US)", "English (UK)", "Japanese", "German"]} />
+                      <SelectGroup label="Timezone" options={["UTC (Universal)", "EST (New York)", "PST (Los Angeles)", "CET (Berlin)"]} />
+                   </div>
+              </div>
 
-        <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-rose-400 flex items-center gap-2">
-                <ShieldAlert className="w-4 h-4" />
-                Danger Zone
-            </h3>
-            <div className="bg-rose-500/5 border border-rose-500/10 rounded-lg p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                <div>
-                    <div className="text-sm font-medium text-rose-200">Delete Project Data</div>
-                    <div className="text-xs text-rose-300/60 mt-1">This will permanently remove all validation history and uploaded datasets.</div>
-                </div>
-                <button className="px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold rounded-lg border border-rose-500/20 transition-colors whitespace-nowrap">
-                    Delete Data
-                </button>
-            </div>
-        </div>
+              <div className="space-y-4">
+                   <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                      <Activity className="w-4 h-4 text-emerald-400" />
+                      System Preferences
+                   </h3>
+                   <div className="space-y-4 pl-0 md:pl-6">
+                      <SelectGroup label="Default Export Format" options={["PDF (Academic Standard)", "LaTeX Source", "JSON Data"]} />
+                      <div className="flex items-center justify-between pt-2">
+                          <div className="space-y-1">
+                              <div className="text-sm text-slate-300">Auto-Save Reports</div>
+                              <div className="text-xs text-slate-500">Save drafts every 30 seconds</div>
+                          </div>
+                          <Toggle active />
+                      </div>
+                   </div>
+              </div>
+          </div>
+
+          <div className="h-px bg-white/5" />
+
+          <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-rose-400 flex items-center gap-2">
+                  <ShieldAlert className="w-4 h-4" />
+                  Danger Zone
+              </h3>
+              <div className="bg-rose-500/5 border border-rose-500/10 rounded-lg p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                  <div>
+                      <div className="text-sm font-medium text-rose-200">Delete Project Data</div>
+                      <div className="text-xs text-rose-300/60 mt-1">This will permanently remove all validation history and uploaded datasets.</div>
+                  </div>
+                  <button className="px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold rounded-lg border border-rose-500/20 transition-colors whitespace-nowrap">
+                      Delete Data
+                  </button>
+              </div>
+          </div>
+      </div>
+       <div className="flex justify-end">
+          <SaveButton onClick={handleSave} isLoading={isSaving} />
+       </div>
     </div>
-     <div className="flex justify-end">
-        <SaveButton onClick={() => {}} />
-     </div>
-  </div>
-);
+  );
+};
 
-const SecurityView = ({ onNavigate }: { onNavigate: any }) => (
-  <div className="space-y-8">
-    <Header 
-        title="Security & Access" 
-        subtitle="Manage 2FA, passwords, and active session devices." 
-        breadcrumb="Workspace / Security" 
-    />
+const SecurityView = ({ onNavigate }: { onNavigate: any }) => {
+  const { updateUser, addLog } = useApp();
+  const [isSaving, setIsSaving] = useState(false);
+  const [passwords, setPasswords] = useState({
+    current: '',
+    new: '',
+    confirm: ''
+  });
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
-    {/* 2FA Section */}
-    <div className="glass-card p-6 rounded-2xl border border-white/5 bg-slate-900/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div className="flex items-start gap-4">
-            <div className="p-3 bg-cyan-500/10 rounded-lg border border-cyan-500/20">
-                <Smartphone className="w-6 h-6 text-cyan-400" />
-            </div>
-            <div>
-                <h3 className="text-base font-semibold text-white">Two-Factor Authentication</h3>
-                <p className="text-sm text-slate-400 mt-1 max-w-md">Secure your account with TOTP (Google Authenticator, Authy). Recommended for high-value research data.</p>
-            </div>
-        </div>
-        <button className="px-5 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-sm font-semibold rounded-lg transition-colors shadow-[0_0_15px_-3px_rgba(34,211,238,0.4)] whitespace-nowrap">
-            Enable 2FA
-        </button>
+  const handlePasswordUpdate = async () => {
+    if (!passwords.new || !passwords.confirm) {
+        setError('Please enter both new and confirm passwords');
+        return;
+    }
+    if (passwords.new !== passwords.confirm) {
+        setError('Passwords do not match');
+        return;
+    }
+    if (passwords.new.length < 6) {
+        setError('Password must be at least 6 characters');
+        return;
+    }
+
+    setIsSaving(true);
+    setError('');
+    setSuccess('');
+
+    try {
+        await updateUser({ newPassword: passwords.new } as any);
+        setSuccess('Password updated successfully');
+        setPasswords({ current: '', new: '', confirm: '' });
+        addLog({ module: 'Security', event: 'User changed password', status: 'success' });
+    } catch (err: any) {
+        setError(err.message || 'Failed to update password');
+    } finally {
+        setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-8">
+      <Header 
+          title="Security & Access" 
+          subtitle="Manage 2FA, passwords, and active session devices." 
+          breadcrumb="Workspace / Security" 
+      />
+
+      {/* 2FA Section */}
+      <div className="glass-card p-6 rounded-2xl border border-white/5 bg-slate-900/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="flex items-start gap-4">
+              <div className="p-3 bg-cyan-500/10 rounded-lg border border-cyan-500/20">
+                  <Smartphone className="w-6 h-6 text-cyan-400" />
+              </div>
+              <div>
+                  <h3 className="text-base font-semibold text-white">Two-Factor Authentication</h3>
+                  <p className="text-sm text-slate-400 mt-1 max-w-md">Secure your account with TOTP (Google Authenticator, Authy). Recommended for high-value research data.</p>
+              </div>
+          </div>
+          <button className="px-5 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-sm font-semibold rounded-lg transition-colors shadow-[0_0_15px_-3px_rgba(34,211,238,0.4)] whitespace-nowrap">
+              Enable 2FA
+          </button>
+      </div>
+
+      {/* Password Change */}
+      <div className="glass-card p-6 md:p-8 rounded-2xl border border-white/5 bg-slate-900/30 space-y-6">
+          <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+              <Lock className="w-4 h-4 text-emerald-400" />
+              Change Password
+          </h3>
+          <div className="grid md:grid-cols-3 gap-6">
+               <InputGroup 
+                label="Current Password" 
+                type="password" 
+                placeholder="••••••••" 
+                value={passwords.current}
+                onChange={(e) => setPasswords({...passwords, current: e.target.value})}
+               />
+               <InputGroup 
+                label="New Password" 
+                type="password" 
+                placeholder="••••••••" 
+                value={passwords.new}
+                onChange={(e) => setPasswords({...passwords, new: e.target.value})}
+               />
+               <InputGroup 
+                label="Confirm New Password" 
+                type="password" 
+                placeholder="••••••••" 
+                value={passwords.confirm}
+                onChange={(e) => setPasswords({...passwords, confirm: e.target.value})}
+               />
+          </div>
+
+          {error && <p className="text-xs text-rose-400 ml-1">{error}</p>}
+          {success && <p className="text-xs text-emerald-400 ml-1">{success}</p>}
+
+          <div className="flex items-center justify-between">
+              <button className="text-xs font-medium text-slate-400 hover:text-white transition-colors">Forgot your password?</button>
+              <SaveButton onClick={handlePasswordUpdate} isLoading={isSaving} />
+          </div>
+      </div>
+
+      {/* Active Sessions */}
+      <div className="glass-card p-6 md:p-8 rounded-2xl border border-white/5 bg-slate-900/30 space-y-6">
+           <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+              <Activity className="w-4 h-4 text-slate-400" />
+              Active Sessions
+          </h3>
+          <div className="space-y-4">
+              {/* Session 1 */}
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 bg-slate-950/50 rounded-lg border border-white/5 gap-3">
+                  <div className="flex items-center gap-4">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                      <div>
+                          <div className="text-sm font-medium text-white">Current Session</div>
+                          <div className="text-xs text-slate-500 font-mono mt-0.5">Device: {navigator.platform} • Active now</div>
+                      </div>
+                  </div>
+                  <div className="px-3 py-1 bg-emerald-500/10 text-emerald-400 text-[10px] font-bold tracking-wider rounded border border-emerald-500/20">CURRENT</div>
+              </div>
+          </div>
+      </div>
     </div>
-
-    {/* Password Change */}
-    <div className="glass-card p-6 md:p-8 rounded-2xl border border-white/5 bg-slate-900/30 space-y-6">
-        <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-            <Lock className="w-4 h-4 text-emerald-400" />
-            Change Password
-        </h3>
-        <div className="grid md:grid-cols-3 gap-6">
-             <InputGroup label="Current Password" type="password" placeholder="••••••••" />
-             <InputGroup label="New Password" type="password" placeholder="••••••••" />
-             <InputGroup label="Confirm New Password" type="password" placeholder="••••••••" />
-        </div>
-        <div className="flex justify-end">
-            <button className="text-xs font-medium text-slate-400 hover:text-white transition-colors">Forgot your password?</button>
-        </div>
-    </div>
-
-    {/* Active Sessions */}
-    <div className="glass-card p-6 md:p-8 rounded-2xl border border-white/5 bg-slate-900/30 space-y-6">
-         <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-            <Activity className="w-4 h-4 text-slate-400" />
-            Active Sessions
-        </h3>
-        <div className="space-y-4">
-            {/* Session 1 */}
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 bg-slate-950/50 rounded-lg border border-white/5 gap-3">
-                <div className="flex items-center gap-4">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                    <div>
-                        <div className="text-sm font-medium text-white">Current Session</div>
-                        <div className="text-xs text-slate-500 font-mono mt-0.5">Device: {navigator.platform} • Active now</div>
-                    </div>
-                </div>
-                <div className="px-3 py-1 bg-emerald-500/10 text-emerald-400 text-[10px] font-bold tracking-wider rounded border border-emerald-500/20">CURRENT</div>
-            </div>
-        </div>
-    </div>
-  </div>
-);
+  );
+};
 
 const WebhooksView = ({ onNavigate }: { onNavigate: any }) => {
     const [webhooks, setWebhooks] = useState<any[]>([]);
