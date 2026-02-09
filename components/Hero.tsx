@@ -48,8 +48,9 @@ export const Hero: React.FC<HeroProps> = ({ onStart }) => {
             className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.1]"
           >
             <span className="text-white">Stress-Test Your </span><br />
-            <span className="text-gradient-animated shimmer inline-block">
-              Research
+            <span className="highlight-block">
+              <span className="text-highlight-r">R</span>
+              <span className="text-cyan-400">esearch</span>
             </span>
             <span className="text-white"> Before </span><br />
             <span className="text-white">You Start.</span>
@@ -85,21 +86,10 @@ export const Hero: React.FC<HeroProps> = ({ onStart }) => {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              className="px-10 py-5 rounded-full font-semibold text-lg text-white border border-white/10 hover:bg-white/5 hover:border-white/20 transition-all flex items-center justify-center gap-2 bg-white/[0.02] backdrop-blur-sm"
+              className="px-10 py-5 rounded-full font-semibold text-lg text-white border border-white/10 hover:bg-white/5 hover:border-white/20 transition-all flex items-center justify-center gap-2 bg-slate-900/40 backdrop-blur-sm"
             >
               How it Works
             </motion.button>
-            <motion.a 
-              href="https://github.com/shafayatsaad/Assertion-Engine_Gemini_Hackathon_Google_Deepmind?tab=readme-ov-file#readme"
-              target="_blank"
-              rel="noopener noreferrer"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              className="px-10 py-5 rounded-full font-semibold text-lg text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/5 hover:border-emerald-500/40 transition-all flex items-center justify-center gap-2 bg-emerald-500/[0.02] backdrop-blur-sm"
-            >
-              View Documentation
-            </motion.a>
           </motion.div>
 
           <motion.div 
