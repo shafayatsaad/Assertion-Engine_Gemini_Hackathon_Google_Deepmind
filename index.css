@@ -408,3 +408,40 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #475569;
 }
+/* --- specialized Landing Page Effects --- */
+
+.highlight-block {
+  position: relative;
+  display: inline-block;
+  padding: 0 0.5rem;
+  margin: 0 -0.5rem;
+}
+
+.highlight-block::before {
+  content: '';
+  position: absolute;
+  inset: 0.1rem -0.2rem;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 4px;
+  z-index: -1;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.1);
+}
+
+.text-highlight-r {
+  color: #fff;
+  position: relative;
+  display: inline-block;
+}
+
+.text-highlight-r::after {
+  content: '';
+  position: absolute;
+  bottom: 0.2em;
+  left: 0;
+  width: 100%;
+  height: 0.4em;
+  background: rgba(34, 211, 238, 0.3);
+  z-index: -1;
+  border-radius: 1px;
+}
