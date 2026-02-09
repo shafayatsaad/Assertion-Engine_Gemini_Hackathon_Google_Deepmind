@@ -51,8 +51,9 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ onNavigate }) 
         name: formData.name,
         email: formData.email,
         title: formData.title,
-        institution: formData.institution
-      });
+        institution: formData.institution,
+        newPassword: formData.newPassword || undefined
+      } as any);
 
       setSuccess('Profile updated successfully!');
       
