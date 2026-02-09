@@ -682,6 +682,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
 
       console.log('📡 Updating profile in Supabase...');
+      
+      // Update core profile data
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -696,6 +698,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (error) {
         console.error('❌ Supabase update error:', error);
         throw error;
+      }
+
+      // Handle password update if provided (data as any to allow password field)
+      if ((data as any).newPassword) {
+        console.log('🔐 Updating password in Supabase Auth...');
+        const { error: passwordError } = await supabase.auth.updateUser({
+          password: (data as any).newPassword
+        });
+        
+        if (passwordError) {
+          console.error('❌ Password update error:', passwordError);
+          throw passwordError;
+        }
+        console.log('✅ Password updated successfully');
       }
       
       setUser(prev => prev ? { ...prev, ...data } : null);
