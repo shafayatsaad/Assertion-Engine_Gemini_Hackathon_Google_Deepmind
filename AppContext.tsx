@@ -156,10 +156,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       while (retries > 0) {
           try {
-              console.log(`📡 Fetching profile (Attempt ${4 - retries}/3)...`);
+              if (retries === 3) console.log(`📡 Fetching profile...`);
               
               const timeoutPromise = new Promise((_, reject) => {
-                  setTimeout(() => reject(new Error('Request timed out')), 15000);
+                  setTimeout(() => reject(new Error('Request timed out')), 45000);
               });
 
               const profilePromise = supabase
@@ -173,24 +173,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               error = result.error;
 
               if (error) {
-                  console.warn(`⚠️ Error fetching profile (Attempt ${4 - retries}):`, error);
-                  if (retries > 1) {
+                  if (error.code !== 'PGRST116') {
+                    console.warn(`⚠️ Fetch attempt ${4 - retries} failed:`, error.message);
+                  }
+                  
+                  if (retries > 1 && error.code !== 'PGRST116') {
                       retries--;
-                      await new Promise(res => setTimeout(res, 1000));
+                      await new Promise(res => setTimeout(res, 2000));
                       continue;
                   }
               }
-              
-              // If we got here with no error, or if we ignored the error but have no data (unlikely with single()), break.
-              // Actually single() returns error if no row.
               break; 
 
-          } catch (err) {
-              console.error(`❌ Fetch attempt ${4 - retries} failed:`, err);
+          } catch (err: any) {
+              console.warn(`❌ Fetch attempt ${4 - retries} caught error:`, err.message);
               error = err;
               if (retries > 1) {
                   retries--;
-                  await new Promise(res => setTimeout(res, 1000));
+                  await new Promise(res => setTimeout(res, 2000));
               } else {
                   break;
               }
@@ -315,7 +315,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     
     try {
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Projects load timed out')), 8000);
+        setTimeout(() => reject(new Error('Projects load timed out')), 30000);
       });
 
       const projectsPromise = supabase
