@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
 export type AIProvider = 'google' | 'openai' | 'anthropic' | 'groq';
 
@@ -63,11 +63,11 @@ export const callAI = async (
     console.log('🚀 Using provider:', activeProvider);
 
     if (activeProvider === 'google') {
-        const genAI = new GoogleGenerativeAI(activeKey);
+        const ai = new GoogleGenAI({ apiKey: activeKey });
         const modelName = localStorage.getItem('ae_api_model') || 'gemini-1.5-flash';
-        const model = genAI.getGenerativeModel({ model: modelName });
 
-        const result = await model.generateContent({
+        const result = await ai.models.generateContent({
+            model: modelName,
             contents: [
                 { role: 'user', parts: [{ text: prompt }] },
                 ...messages.map(m => ({
@@ -75,15 +75,14 @@ export const callAI = async (
                     parts: [{ text: m.text }]
                 }))
             ],
-            generationConfig: {
+            config: {
                 temperature: options.temperature ?? 0.7,
                 maxOutputTokens: options.maxTokens,
                 responseMimeType: options.responseMimeType
             }
         });
 
-        const response = await result.response;
-        return response.text();
+        return result.text;
     }
 
     // OpenAI Compatible Providers (OpenAI, Groq)
