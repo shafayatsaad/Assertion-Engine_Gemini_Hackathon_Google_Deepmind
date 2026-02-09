@@ -686,14 +686,15 @@ const ApiKeysView = ({ onNavigate }: { onNavigate: any }) => {
         
         try {
             // Dynamically import official SDK
-            const { GoogleGenerativeAI } = await import("@google/generative-ai");
-            const client = new GoogleGenerativeAI(apiKey);
+            const { GoogleGenAI } = await import("@google/genai");
+            const ai = new GoogleGenAI({ apiKey });
             
             console.log('🔌 Testing connection to Google AI...');
 
             // List of models to try in order of preference
             // Prioritize stable Flash models. Avoid Pro models in auto-discovery to save quota.
             const candidateModels = manualModel ? [manualModel] : [
+                'gemini-3-flash-preview',
                 'gemini-1.5-flash', 
                 'gemini-1.5-flash-8b',
                 'gemini-2.0-flash',
@@ -707,11 +708,12 @@ const ApiKeysView = ({ onNavigate }: { onNavigate: any }) => {
             for (const modelName of candidateModels) {
                 try {
                     console.log(`Trying model: ${modelName}...`);
-                    const model = client.getGenerativeModel({ model: modelName });
                     
                     // Use a very tiny prompt to test connectivity
-                    const result = await model.generateContent("ping");
-                    const response = await result.response;
+                    const result = await ai.models.generateContent({
+                        model: modelName,
+                        contents: "ping"
+                    });
                     
                     console.log(`✅ Success with ${modelName}`);
                     bestModel = modelName;
@@ -1010,6 +1012,7 @@ const ApiKeysView = ({ onNavigate }: { onNavigate: any }) => {
                     }}
                     className="bg-transparent text-[10px] font-mono text-cyan-400 focus:outline-none border-none cursor-pointer flex-1"
                 >
+                    <option value="gemini-3-flash-preview">gemini-3-flash-preview (Experimental)</option>
                     <option value="gemini-1.5-flash">gemini-1.5-flash (Standard)</option>
                     <option value="gemini-1.5-flash-8b">gemini-1.5-flash-8b (High Availability)</option>
                     <option value="gemini-2.0-flash">gemini-2.0-flash (Next Gen)</option>
