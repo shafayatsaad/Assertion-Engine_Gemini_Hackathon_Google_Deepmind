@@ -55,7 +55,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate }) => {
               <Atom className="w-5 h-5 text-emerald-400" />
             </div>
             <span className="font-bold text-lg tracking-tight text-white group-hover:text-emerald-50 transition-colors">
-              Assertion
+              Assertion Engine
             </span>
           </button>
 
