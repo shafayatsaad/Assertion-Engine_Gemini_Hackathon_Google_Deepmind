@@ -1130,13 +1130,18 @@ const Toggle = ({ active }: { active: boolean }) => (
     </div>
 );
 
-const SaveButton = ({ onClick }: { onClick: () => void }) => (
+const SaveButton = ({ onClick, isLoading }: { onClick: () => void, isLoading?: boolean }) => (
     <button 
         onClick={onClick}
-        className="px-6 py-3 bg-emerald-500/10 border border-emerald-500/50 text-emerald-400 rounded-lg text-sm font-semibold hover:bg-emerald-500 hover:text-slate-950 transition-all flex items-center gap-2 group shadow-[0_0_15px_-5px_rgba(16,185,129,0.4)] whitespace-nowrap"
+        disabled={isLoading}
+        className="px-6 py-3 bg-emerald-500/10 border border-emerald-500/50 text-emerald-400 rounded-lg text-sm font-semibold hover:bg-emerald-500 hover:text-slate-950 transition-all flex items-center gap-2 group shadow-[0_0_15px_-5px_rgba(16,185,129,0.4)] whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
     >
-        <Save className="w-4 h-4" />
-        Save Changes
+        {isLoading ? (
+            <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
+        ) : (
+            <Save className="w-4 h-4" />
+        )}
+        {isLoading ? 'Saving...' : 'Save Changes'}
     </button>
 );
 
