@@ -76,7 +76,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate }) => {
                 </button>
                 <button 
                   onClick={() => onNavigate('signup')}
-                  className="group bg-emerald-500 text-slate-950 px-5 py-2.5 rounded-full text-sm font-semibold transition-all hover:bg-emerald-400 hover:shadow-[0_0_20px_-5px_rgba(52,211,153,0.5)] flex items-center gap-2"
+                  className="group bg-emerald-500 text-slate-950 px-5 py-2.5 rounded-full text-sm font-semibold transition-all hover:bg-emerald-400 hover:shadow-[0_0_25px_-2px_rgba(16,185,129,0.6)] flex items-center gap-2"
                 >
                   Start Validating
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
